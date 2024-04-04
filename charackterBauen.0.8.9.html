@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" href="css/polygonmaker.0.0.2.css">
+  <link rel="stylesheet" href="css/charaktermaker.0.0.2.css">
+  <title>CharakterBauen.0.8.9</title>
+  <script>
+  	CB = {}
+  	
+  	CB.Init = function(){
+ 	 	PM.PolygonMakerInit();
+  		CB.PatternInit();
+  		CB.Welt.Charakter.Pattern.Erstellen();
+  		CB.Welt.Charakter.Farben.Erstellen();
+  		CB.ErstelleDieBilder();
+  		CB.GegnerSchablone.MalDieBilder("Alle");
+  		AM.LoopObjekt = window.setInterval("AM.Loop()",1000/AM.BPS.Value);
+  		AM.Check();
+  		CB.ZeigDasBild("Bild0","",0,"Bestandteil");
+	}
+
+  	Objekt = {};
+  	
+  	CB.WelcheElementeWurdenErstellt = [];
+  	CB.WelchesElementSollErstelltWerden = "FarbEllipse";
+  	CB.WelchesBildIstGeradeAusgesuchtWer = "";
+  	CB.WelchesBildIstGeradeAusgesuchtName = "";
+  	CB.WelchesBildIstGeradeAusgesuchtNummer = "";
+  	CB.WelcheFarbeIstGeradeAusgesuchtNummer = "leer";
+  	CB.WelcheFarbeIstGeradeAusgesuchtElement = "leer";
+  	CB.WelcheFuellungIstGeradeAusgesuchtNummer = "leer";
+  	CB.WelcheFuellungIstGeradeAusgesuchtElement = "leer";
+  	CB.WelcheTimestopIstGeradeAusgesuchtNummer = "leer";
+  	CB.WelcheTimestopIstGeradeAusgesuchtElement = "leer";
+  	CB.WelcheStempelIstGeradeAusgesuchtNummer = "leer";
+  	CB.WelcheStempelIstGeradeAusgesuchtElement = "leer";
+  	CB.WelchePatternIstGeradeAusgesuchtNummer = "leer";
+  	CB.WelchePatternIstGeradeAusgesuchtElement = "leer";
+  	
+  	CB.Welt = {};
+  	CB.Welt.Charakter = {};
+  	CB.Welt.Charakter.WelcheGibtEs = [
+  		["TestFigur",400,400,8,["Beine","Arme","Koerper","Kopf"]],
+  		["NeueFigur",400,400,8,["Beine","Arme","Koerper","Kopf"]],
+  		["Schneemann",400,400,8,["Beine","Arme","Koerper","Kopf"]],
+  		["Testmann",400,400,16,["Beine","Arme","Koerper","Kopf"]],
+	  	["Taube",100,100,4,["Ab","Ac","Arme","Koerper","Kopf"]]
+  	];
+  	
+  	CB.Welt.Charakter.Ausgewaehlt = "TestFigur";
+  	let AktuelleCharakter = CB.Welt.Charakter.Ausgewaehlt;
+  	
+  	CB.Welt.Charakter.Farben = {};
+  	CB.Welt.Charakter.Farben.Erstellen = function(){
+  		for(let charakterNr in CB.Welt.Charakter.WelcheGibtEs){
+  			const charakterId = CB.Welt.Charakter.WelcheGibtEs[charakterNr][0];
+  			CB.GegnerSchablone.Farben.Erstellen(charakterId);
+  		}
+  	}
+  	
+  	CB.Welt.Charakter.Pattern = {};
+  	CB.Welt.Charakter.Pattern.Erstellen = function() {
+	  	const patternArray = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs;
+	  	for (const pattern of patternArray) {
+		  	const canvasId = pattern[0];
+		  	const canvasContainerId = "PatternCanvasContainer";
+		  	createCanvasElement(canvasContainerId, canvasId, 'bild');
+		  	Objekt.Pattern[pattern[1][0]].Bauen(canvasId, pattern[1][1]);
+	  	}
+	  	PatternContainerAnzeigePatternContainerTexturAendernInput.innerHTML = "";
+	  	const patternList = Objekt.Pattern.WelcheGibtEs;
+	  	for (const patternName of patternList) {
+		  	const optionId = "Option" + patternName;
+		  	createOptionElement('PatternContainerAnzeigePatternContainerTexturAendernInput', optionId, '', patternName, patternName);
+	  	}
+  	};
+  
+  	FarbFunktion = function(id,farbe){
+  		this.id = id;
+  		this.Farbe = farbe;
+  		this.GibDieFarbeRaus = function(){
+  			return(
+  				farbe = CB.GegnerSchablone[AktuelleCharakter].Farben[id]
+  			)
+  		}
+  	}
+  	
+  	CB.GegnerSchablone = {};
+  		
+	CB.GegnerSchablone.CharakterInit = function() {
+		for (const char of CB.Welt.Charakter.WelcheGibtEs) {
+			const typ = char[0];
+			CB.GegnerSchablone[typ] = {};
+			const charData = CB.GegnerSchablone[typ];
+			charData.Bild = {
+				Width: char[1],
+				Height: char[2],
+				Anzahl: char[3],
+				Bestandteile: char[4]
+			};
+			charData.Farben = { WelcheGibtEs: [] };
+			charData.Stempel = { WelcheGibtEs: [] };
+			charData.Pattern = { WelcheGibtEs: [] };
+			charData.Polygone = { WelcheGibtEs: [] };
+			charData.WelcheGibtEs = [];
+			let stellenCounter = 0;
+			for (const part of charData.Bild.Bestandteile) {
+				for (let i = 0; i < charData.Bild.Anzahl; i++) {
+					charData.WelcheGibtEs[stellenCounter] = [part + i, `Bild${i}${part}`];
+					stellenCounter++;
+				}
+			}
+			for (const entry of charData.WelcheGibtEs) {
+				const name = entry[0];
+				charData[name] = {
+					CanvasElemente: { Alle: [] }
+				};
+			}
+		}
+	};
+	
+	CB.GegnerSchablone.CharakterInit();
+		
+  	CB.GegnerSchablone.Farben = {};
+  	CB.GegnerSchablone.Farben.Erstellen = function(wer) {
+	  	const farben = CB.GegnerSchablone[wer].Farben.WelcheGibtEs;
+	  	for (const entry of farben) {
+		  	const [farbeName, farbeWert] = entry;
+		  	CB.GegnerSchablone[wer].Farben[farbeName] = farbeWert;
+		  	Objekt[farbeName] = new FarbFunktion(farbeName, farbeWert);
+	  	}
+  	};
+  	
+  	CB.GegnerSchablone.Stempel = {};
+  	CB.GegnerSchablone.Stempel.Erstellen = function(wer) {
+	  	const stempel = CB.GegnerSchablone[wer].Stempel.WelcheGibtEs;
+	  	for (const entry of stempel) {
+		  	const [stempelName, stempelWert] = entry;
+		  	CB.GegnerSchablone[wer].Stempel[stempelName] = stempelWert;
+	  	}
+  	};
+  	
+  	CB.GegnerSchablone.Pattern = {};
+  	CB.GegnerSchablone.Pattern.Erstellen = function(wer) {
+	  	const patterns = CB.GegnerSchablone[wer].Pattern.WelcheGibtEs;
+	  	for (const entry of patterns) {
+		  	const [patternName, patternValue] = entry;
+		  	CB.GegnerSchablone[wer].Pattern[patternName] = patternValue;
+	  	}
+	  	CB.Welt.Charakter.Pattern.Erstellen();
+  	};
+
+  	CB.GegnerSchablone.MachDieFuellungen = function(context, rgba) {
+	  	for (const farbenNr in CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs) {
+		  	const aktuelleFarbe = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[farbenNr];
+		  	if (rgba === aktuelleFarbe[0]) {
+			  	for (const fuellungen in aktuelleFarbe[2]) {
+				  	const fuellungNr = aktuelleFarbe[2][fuellungen];
+				  	let gradient;
+				  	if (fuellungNr[0] === "Radial") {
+					  	const maasseVary = fuellungNr[1];
+					  	gradient = context.createRadialGradient(maasseVary[0], maasseVary[1], maasseVary[2], maasseVary[3], maasseVary[4], maasseVary[5]);
+				  	} else if (fuellungNr[0] === "Linear") {
+					  	const maasseVary = fuellungNr[1];
+					  	gradient = context.createLinearGradient(maasseVary[0], maasseVary[1], maasseVary[2], maasseVary[3]);
+		 		 	} else if (fuellungNr[0] === "Pattern") {
+					  	gradient = context.createPattern($(fuellungNr[1][0]), fuellungNr[1][1]);
+					  	gradientVary = gradient;
+					  	context.scale(fuellungNr[1][2], fuellungNr[1][3]);
+					  	context.translate(fuellungNr[1][4], fuellungNr[1][5]);
+					  	context.globalAlpha = fuellungNr[1][6];
+					  	context.rotate(fuellungNr[1][7]);
+					  	context.fillStyle = gradientVary;
+					  	context.fill();
+					  	context.rotate(-fuellungNr[1][7]);
+					  	context.globalAlpha = 1;
+					  	context.translate(-fuellungNr[1][4], -fuellungNr[1][5]);
+					  	context.scale(1 / fuellungNr[1][2], 1 / fuellungNr[1][3]);
+				  	}
+				  	if (fuellungNr[0] === "Linear" || fuellungNr[0] === "Radial") {
+					  	for (const grad in fuellungNr[2]) {
+						  	const gradVary = fuellungNr[2][grad];
+						  	gradient.addColorStop(gradVary[0], gradVary[1]);
+				  		}
+					  	gradientVary = gradient;
+					  	context.fillStyle = gradientVary;
+					  	context.fill();
+				  	}
+			  	}
+		  	}
+	  	}
+  	};
+  	
+  	CB.GegnerSchablone.CanvasElemente = {};
+  	CB.GegnerSchablone.CanvasElemente.Bauen = function(charakterId, teil, ctx){
+  		const elementeArray = CB.GegnerSchablone[charakterId][teil].CanvasElemente.Alle;
+  		for(let all in elementeArray){
+  			const array = elementeArray[all];
+  			const elementId = array[0];
+  			let textVary = "";
+  	//		if(elementId != "Stempel"){
+	  			for(let elementNr in Objekt.Daten.SchummelArray[elementId]){
+	  				if(elementNr > 0){
+	  					textVary += "'" + array[elementNr] + "'";
+		  				if(elementNr<Objekt.Daten.SchummelArray[elementId].length - 1){
+		  					textVary += ",";
+		  				}
+	  				}
+	  			}
+	  			eval("Objekt.CanvasElemente[elementId](ctx, " + textVary + ");");
+  	/*		} else
+  			if(elementId == "Stempel"){ 
+	  			var id = array[1];
+	  			var x = array[2];
+	  			var y  =  array[3];
+	  			var scaleX = array[4];
+	  			var scaleY = array[5];
+	  			var skewX = array[6];
+	  			var skewY = array[7];
+	  			var rotation = array[8];
+	  			Objekt.CanvasElemente[elementId](ctx, id, x, y, scaleX, scaleY, skewX, skewY, rotation);
+  			}*/
+  			
+  			if(elementId == "Stempel"){
+  				let welcheNummer = "";
+  				for(let stempelNr in CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs){
+  					if(CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[stempelNr][0] == array[1]){
+  						welcheNummer = stempelNr;
+  					}
+  				}
+  				let istEinStempelImStempel = false;
+  				for(let alles in CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[welcheNummer][1]){
+  					const elementStempel = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[welcheNummer][1][alles];
+  					if(elementStempel[0] == "Stempel"){
+  						istEinStempelImStempel = true;
+  					/*	arrayStempel = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[welcheNummer][1][alles];
+  						var id = arrayStempel[1];
+  						var x = arrayStempel[2]*1+array[2]*1;
+  						var y = arrayStempel[3]*1+array[3]*1;
+  						var scaleX = array[4];
+  						var scaleY = array[5];
+  						var skewX = arrayStempel[6];
+  						var skewY = arrayStempel[7];
+  						var rotation = array[8];
+  						Objekt.CanvasElemente[elementId](ctx, id, x, y, scaleX, scaleY, skewX, skewY, rotation);*/
+  					} 
+  					/*else{
+  						let elementImStempel = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[welcheNummer][1][alles][0];
+  						
+  						for(all2 in Objekt.Daten.SchummelArray[elementImStempel]){
+	  						if(all2 > 0){
+	  							textVary += "'" + array[all2] + "'";
+		  						if(all2<Objekt.Daten.SchummelArray[elementImStempel].length - 1){
+			  						textVary += ",";
+		  						}
+	  						}
+  						}
+  						eval("Objekt.CanvasElemente[elementId](ctx, "+textVary+");");
+  					}*/
+  				}
+  				if(istEinStempelImStempel == true){
+  					SagDas("stempelimstempel")
+	  			}
+  			}
+  		}
+  	};
+  	
+  	Objekt.LadePruefung = {};
+  	for(let charakterNr in CB.Welt.Charakter.WelcheGibtEs){
+  		const id = CB.Welt.Charakter.WelcheGibtEs[charakterNr][0];
+  		Objekt.LadePruefung[id] = {};
+  		Objekt.LadePruefung[id].Geladen = false;
+  	}
+  	
+
+		CB.GegnerSchablone.MalDieBilderModusPruefung = function(modus){
+			if(modus == "AlleWoDieFuellungIst"){
+	  			var sollGemachtWerden = false;
+	  			var welcheStempelSindImBilde = [];
+	  			for(all in charakterArray){
+	  				var array = charakterArray[all];
+	  				for(each in CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle){
+	  					if(CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle[each][1] == werIstEs){
+	  						sollGemachtWerden = true;
+	  					}
+	  				}
+						for(each in CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle){
+	  					if(CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle[each][0] == 'Stempel'){
+								var istDerStempelSchonEingetragen = false;
+	  						for(stempel in welcheStempelSindImBilde){
+	  							if(welcheStempelSindImBilde[stempel] == CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle[each][1]){
+	  								istDerStempelSchonEingetragen = true;
+	  							}
+	  						}
+	  						if(istDerStempelSchonEingetragen == false){
+	  							welcheStempelSindImBilde[welcheStempelSindImBilde.length] = CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle[each][1];
+	  						}
+	  					}
+	  				}
+	  			}
+	  			for(each in CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs){
+	  				var istDerStempelImBilde = false
+	  				for(stempel in welcheStempelSindImBilde){
+	  					if(welcheStempelSindImBilde[stempel] == CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[each][0]){
+	  						istDerStempelImBilde = true;
+	  					}
+	  				}
+	  				if(istDerStempelImBilde == true){
+	  					for(alle in CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[each][1]){
+	  						if(CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[each][1][alle][1] == werIstEs){
+	  							sollGemachtWerden = true;
+	  						}
+	  					}
+	  				}
+	  			}
+	  			if(sollGemachtWerden == false){
+	  				return true;
+	  			}
+	  		}else
+	  		if(modus == "AlleWoDerStempelIst"){
+	  			var sollGemachtWerden = false;
+	  			for(all in CB.GegnerSchablone[AktuelleCharakter].WelcheGibtEs){
+	  				var array = CB.GegnerSchablone[AktuelleCharakter].WelcheGibtEs[all];
+	  				for(each in CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle){
+	  					if(CB.GegnerSchablone[AktuelleCharakter][array[0]].CanvasElemente.Alle[each][1] == werIstEs){
+	  						sollGemachtWerden = true;
+	  					}
+	  				}
+	  			}
+	  			if(sollGemachtWerden == false){
+	  				return true;
+	  			}
+	  		}
+		}
+  	
+  	CB.GegnerSchablone.MalDieBilder = function(modus, werIstEs) {
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const charakterBild = aktuellerCharakter.Bild;
+  		const charakterBildAnzahl = charakterBild.Anzahl;
+  		const charakterBildBestandteile = charakterBild.Bestandteile;
+  		const charakterArray = aktuellerCharakter.WelcheGibtEs;
+	  	const width = aktuellerCharakter.Bild.Width;
+	  	const height = aktuellerCharakter.Bild.Height;
+	  	if (!Objekt.LadePruefung[AktuelleCharakter].Geladen) {
+		  	for (let charakterNr in charakterArray) {
+			  	var id = 'Canvas' + charakterArray[charakterNr][0];
+			  	createCanvasElement('AllerErstellungsCanvassesContainer', id, '', width, height);
+		  	}
+		  	Objekt.LadePruefung[AktuelleCharakter].Geladen = true;
+	  	}
+	  	var pruefungStatus = CB.GegnerSchablone.MalDieBilderModusPruefung();
+  		if(pruefungStatus == true){
+  			alert();
+  			return;
+  		}
+  		if(modus == "Alle" || modus == "AlleWoDerStempelIst" || modus == "AlleWoDieFuellungIst"){
+  			for(let charakterNr in charakterArray){
+  				const array = charakterArray[charakterNr];
+				const wer = 'Canvas' + array[0];
+				const name = array[0];
+  				const id = wer;
+  				const canvas = $(id);
+  				canvas.width = width;
+  				canvas.height = height;
+  				const ctx = canvas.getContext('2d');
+  				CB.GegnerSchablone.CanvasElemente.Bauen(AktuelleCharakter, name, ctx);
+  			}
+  		}else{
+  			const wer = 'Canvas' + modus[0] + modus[1];
+  			const name = modus[0] + modus[1];
+  			const id = wer;
+  			const canvas = $(id);
+  			canvas.width = width;
+  			canvas.height = height;
+  			const ctx = canvas.getContext('2d');
+  			CB.GegnerSchablone.CanvasElemente.Bauen(AktuelleCharakter, name, ctx);
+  		}
+  		const canvasEndergebnisId = 'CanvasEndergebnis';
+		createCanvasElement('AllerErstellungsCanvassesContainer', canvasEndergebnisId, '', width, height);
+		const canvasEndergebnis = document.getElementById(canvasEndergebnisId);
+ 	 	const ctxEndergebnis = canvasEndergebnis.getContext('2d');
+ 	 	if(modus == "Alle"||modus == "AlleWoDerStempelIst" || modus == "AlleWoDieFuellungIst"){
+		 	for(let bildNr = 0; bildNr < charakterBildAnzahl; bildNr++){
+  				ctxEndergebnis.clearRect(0, 0, width, height);
+  				for(let bestandteileNr in charakterBildBestandteile){
+  					const teil = charakterBildBestandteile[bestandteileNr];
+  					ctxEndergebnis.drawImage($('Canvas'+teil+bildNr), 0, 0);
+  				}
+ 			 	$('Bild' + bildNr + 'Bild').src = $('CanvasEndergebnis').toDataURL();
+  		 		for(let bestandteileNr in charakterBildBestandteile){
+ 			 		const teil = charakterBildBestandteile[bestandteileNr];
+ 		 			ctxEndergebnis.clearRect(0, 0, width, height);
+ 			 		ctxEndergebnis.drawImage($('Canvas' + teil + bildNr), 0, 0);
+ 			 		$('Bild' + bildNr + teil + 'Bild').src = $('CanvasEndergebnis').toDataURL();
+ 		 		}
+ 	 		}
+ 	 	}
+ 	 	else{
+ 	 		ctxEndergebnis.clearRect(0, 0, width, height);
+ 	 		for(let bestandteileNr in charakterBildBestandteile){
+ 	 			const teil = charakterBildBestandteile[bestandteileNr];
+ 	 			ctxEndergebnis.drawImage($('Canvas' + teil + modus[1]), 0, 0);
+ 	 		}
+ 	 		$('Bild' + modus[1] + 'Bild').src = $('CanvasEndergebnis').toDataURL();
+ 	 		ctxEndergebnis.clearRect(0, 0, width, height);
+ 	 		ctxEndergebnis.drawImage($('Canvas'+modus[0]+modus[1]), 0, 0);
+ 	 		$('Bild' + modus[1] + modus[0] + 'Bild').src = $('CanvasEndergebnis').toDataURL();
+ 	 	}
+  	};
+	
+  	CB.GegnerSchablone.AenderDenWertFuellung = (value, stelle, stelle2, stelle3) => {
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const farbenArray = aktuellerCharakter.Farben.WelcheGibtEs;
+  		const farbe = farbenArray[CB.WelcheFarbeIstGeradeAusgesuchtNummer];
+  	 	const fuellungArray = farbe[2][CB.WelcheFuellungIstGeradeAusgesuchtNummer];
+  		if (typeof fuellungArray[stelle][stelle2] === "number" || typeof fuellungArray[stelle][stelle2] === "string") {
+  			fuellungArray[stelle][stelle2] = value;
+  		} else {
+  			fuellungArray[stelle][stelle3][stelle2] = value;
+  		}
+  		CB.GegnerSchablone.MalDieBilder("AlleWoDieFuellungIst", farbe[0]);
+  		MachDieFarbenContainer_FuellungAnzeige();
+  		FarbenAnzeigeContainerAnzeigen();
+  		$("FarbenContainer_FarbAnzeige").src = $('FarbenAnzeigeContainerFarbe' + CB.WelcheFarbeIstGeradeAusgesuchtNummer + 'FarbAnzeige').toDataURL();
+  	}
+  	
+  	CB.GegnerSchablone.AenderDenWert = (value, stelle, stelle2, plane, levelNr, modus) => {
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  	 	if (modus === "Bestandteil") {
+  	 		const elementeArray = aktuellerCharakter[plane + levelNr].CanvasElemente.Alle;
+		  	elementeArray[stelle][stelle2] = value;
+		  	const imageId = "Bild" + levelNr + plane;
+		  	MachDieElemente(imageId, plane, levelNr, elementeArray, modus);
+		  	CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+		  	CB.ZeigDasBild(imageId, plane, levelNr, modus);
+	  	} else if (modus === "Stempel") {
+	  		const aktuellerStempelArray = aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer];
+	  		const stempelName = aktuellerStempelArray[0];
+	  		const stempelData = aktuellerStempelArray[1];
+		  	stempelData[stelle][stelle2] = value;
+		  	const imageId = "Stempel" + CB.WelcheStempelIstGeradeAusgesuchtNummer;
+		  	MachDieElemente(imageId, plane, levelNr, stempelData, modus);
+		  	CB.GegnerSchablone.MalDieBilder("AlleWoDerStempelIst", stempelName);
+		  	CB.ZeigDasBild(imageId, plane, levelNr, modus);
+	  	}
+  	};
+  	
+  	CB.GegnerSchablone.VerschiebeDiesesElement = function(id, stelle, plane, levelNr, wer, richtung, modus){
+  		let elementeArray;
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		if(modus == "Bestandteil"){
+  			elementeArray = aktuellerCharakter[plane + levelNr].CanvasElemente.Alle;
+  		}else
+  		if(modus == "Stempel"){
+  			elementeArray = aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1];
+  		}
+  		const merkVary = elementeArray[stelle];
+  		let neueStelle;
+  		elementeArray.splice(stelle, 1);
+  		if(richtung == "Hoch"){
+  			elementeArray.splice(stelle - 1, 0, merkVary);
+  			neueStelle = stelle - 1;
+  		}else
+  		if(richtung == "Runter"){
+  			elementeArray.splice(stelle + 1, 0, merkVary);
+  			neueStelle = stelle + 1;
+  		}
+  		if(modus == "Bestandteil"){
+  			CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+  		}else
+  		if(modus == "Stempel"){
+  			CB.GegnerSchablone.MalDieBilder("AlleWoDerStempelIst", aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][0]);
+  		}
+	  	CB.ZeigDasBild(wer, plane, levelNr, modus);
+	  	WaehleDiesesElementAus(id, stelle, plane, levelNr, wer, neueStelle, modus);
+  	}
+ 
+  	CB.GegnerSchablone.LoescheDiesesElement = function(id, stelle, plane, levelNr, wer, modus){
+  		let elementeArray;
+  		if(modus == "Bestandteil"){
+  			elementeArray = CB.GegnerSchablone[AktuelleCharakter][plane+levelNr].CanvasElemente.Alle;
+  		}else
+  		if(modus == "Stempel"){
+  			elementeArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1];
+  		}
+  		elementeArray.splice(stelle, 1);
+  		if(modus == "Bestandteil"){
+  			CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+  		}else
+  		if(modus == "Stempel"){
+  			CB.GegnerSchablone.MalDieBilder("AlleWoDerStempelIst", CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][0]);
+  		}
+  		CB.ZeigDasBild(wer, plane, levelNr, modus);
+  	};
+  	
+  	CB.GegnerSchablone.DiesesElementDuplizieren = function(id, stelle, plane, levelNr, wer, modus){
+  		let elementeArray;
+  		if(modus == "Bestandteil"){
+  			elementeArray = CB.GegnerSchablone[AktuelleCharakter][plane+levelNr].CanvasElemente.Alle;
+  		}else
+  		if(modus == "Stempel"){
+  			elementeArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1];
+  		}
+  		let arrayVary = [];
+  		for(all in elementeArray[stelle]){
+  			arrayVary[arrayVary.length] = elementeArray[stelle][all];
+  		}
+  		elementeArray.splice(stelle, 0, arrayVary);
+  		if(modus == "Bestandteil"){
+  			CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+  		}else
+  		if(modus == "Stempel"){
+  			CB.GegnerSchablone.MalDieBilder("AlleWoDerStempelIst", CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][0]);
+  		}
+  		CB.ZeigDasBild(wer, plane, levelNr, modus);
+  	};
+  	
+  	CB.GegnerSchablone.DiesenStempelDuplizieren = function(){
+  		const index = CB.WelcheStempelIstGeradeAusgesuchtNummer;
+  		const stempelArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs;
+  		const aktuellerStempel = stempelArray[index];
+  		const alterStempelName = aktuellerStempel[0];
+  		const neuerStempelName = alterStempelName + "Kopie";
+  		for(let stempelNr in stempelArray){
+  			if(neuerStempelName == stempelArray[stempelNr][0]){
+  				SagDas("Dieser Name ist schon vergeben. Aender den Namen der Ursprungskopie.");
+  				return;
+  			}
+  		}
+  		let elemente = [];
+  		for(let elementNr in aktuellerStempel[1]){
+  			elemente[elemente.length] = aktuellerStempel[1][elementNr];
+  		}
+  		const neuerStempel = [neuerStempelName, elemente];
+  		stempelArray.splice(parseInt(index)+1, 0, neuerStempel);
+  		StempelContainerAnzeigen();
+  		StempelContainerAnzeigeStempelContainerAuswaehlen($("StempelContainerAnzeigeStempel" + index), index);
+  		TauschDenStempelAusSelectFeldOptionenErstellen();
+  	};
+  	
+  	TauschDenStempelAusSelectFeldOptionenErstellen = function(){
+  		$('TauschDenStempelAusSelectFeld').innerHTML = "";
+  		const stempelArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs;
+  		for(let stempel in stempelArray){
+  			const welcherStempelId = stempelArray[stempel][0];
+  			const id = 'TauschDenStempelAusSelectFeld';
+  			const id2 = 'CanvasElementOption' + stempel;
+  			const p = document.createElement('option');
+  			p.setAttribute('id', id2);
+  			p.setAttribute('value', welcherStempelId);
+  			$(id).appendChild(p);
+  			$(id2).innerHTML=welcherStempelId;
+  		}
+  	}
+  	
+  	DieseFarbeDuplizieren = function(){
+  		const index = CB.WelcheFarbeIstGeradeAusgesuchtNummer;
+  		const farbenArray = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs;
+  		const aktuelleFarbe = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[index];
+  		const alterFarbenName = aktuelleFarbe[0];
+  		const neuerFarbenName = alterFarbenName + "Kopie";
+  		for(let farbenNr in farbenArray){
+  			if(neuerFarbenName == farbenArray[farbenNr][0]){
+  				SagDas("Dieser Name ist schon vergeben. Aender den Namen der Ursprungskopie.")
+  				return;
+  			}
+  		}
+  		const neueFarbe = [neuerFarbenName, aktuelleFarbe[1], aktuelleFarbe[2]];
+  		const neuerIndex = parseInt(index)+1;
+  		farbenArray.splice(neuerIndex, 0, neueFarbe);
+  		CB.GegnerSchablone.Farben.Erstellen(AktuelleCharakter);
+  		FarbenAnzeigeContainerAnzeigen();
+  		FarbenAnzeigeContainerAuswaehlen($("FarbenAnzeigeContainerFarben" + neuerIndex), neuerIndex);
+  	};
+  	
+  	ElementZuStempel=function(id,stelle,plane,levelNr,wer){
+  		var stempelInhalt=CB.GegnerSchablone[AktuelleCharakter][plane+levelNr].CanvasElemente.Alle;
+  		var istEinStempelImStempel=false;
+  		for(rtz in stempelInhalt){
+  			if(stempelInhalt[rtz][0] == "Stempel"){
+  			//	istEinStempelImStempel=true;
+  			}
+  		}
+  		if(istEinStempelImStempel == false){
+  			var zielArray=CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs;
+  			var id=OptionsContainerAnzeigeElementZuStempelId.value;
+  			var darfDerStempelErstelltWerden=true;
+  			for(rtz in zielArray){
+  				if(zielArray[rtz][0] == id){
+  					darfDerStempelErstelltWerden=false;
+  				}
+  			}
+  			if(darfDerStempelErstelltWerden == true){
+  				zielArray[zielArray.length]=[id,stempelInhalt];
+  				SagDas(id+" wurde als Stempel hinzugefuegt.");
+  			}else{
+  				SagDas("Dieser Stempelname ist schon vergeben. Such einen anderen Namen aus.")
+  			}
+  		}else{
+  			SagDas("Momentan keine Stempel in Stempeln erlaubt, leider.")
+  		}
+  	}
+  	
+  	ElementCreationContainerAnzeigen = function(id, stelle, plane, levelNr, wer, modus){		
+  		$(id).style.display = "none"; // der Button wird noch wegen einem Bug ausgeblendet. 		
+  		ElementCreationContainer.style.display = "block";
+  		const containerId = 'ElementCreationContainerAnzeige';	
+  		const elementContainerId = containerId + "Container";
+  		const elementContainer = createDivElement(containerId, elementContainerId, containerId, ""); 	
+	 	const creationData = Objekt.Daten.Struktur[CB.WelchesElementSollErstelltWerden];
+	 	const creationElements = creationData.WelcheGibtEs;
+	 	for (let elementNr in creationElements) {
+		 	const was = creationElements[elementNr][0];
+		 	const elementCreationData = creationData.ElementErstellen[was];
+		 	const elementType = elementCreationData.Type;
+		 	const elementValue = elementCreationData.Value;
+		 	const elementOnchange = elementCreationData.Onchange;
+		 	const elementOnclick = elementCreationData.Onclick;
+		 	const id = containerId + was;
+		 	const p = document.createElement(elementType);
+		 	p.setAttribute('id', id);
+		 	p.setAttribute('class', containerId + was + ' ' + CB.WelchesElementSollErstelltWerden + was);
+		 	if (elementValue !== "") {
+		 		p.setAttribute('value', elementValue);
+		 	}
+		 	if (elementOnchange !== "") {
+		 		p.setAttribute('onchange', elementOnchange);
+		 	}
+		 	if (elementOnclick !== "") {
+			 	p.setAttribute('onclick', elementOnclick);
+		 	}
+		 	$(elementContainerId).appendChild(p);
+		 	const elementEigenHTML = elementCreationData.EigenHTML;
+		 	if (elementEigenHTML !== "") {
+		 		$(id).innerHTML = elementEigenHTML;
+		 	}
+	 	}
+  		createImageElement(elementContainerId, containerId + 'ZwischenZeichnung', containerId + 'ZwischenZeichnung', 'img');
+  		createButtonElement(elementContainerId, containerId + 'MachDas', containerId + 'MachDas', `MachEinNeuesElement(this.id, ${stelle}, "${plane}", ${levelNr}, "${wer}", "${modus}")`, 'In dieser Ebene erstellen');
+  		if(modus == "Bestandteil"){
+  			createButtonElement(elementContainerId, containerId + 'MachDasFuerAlleEbenen', containerId + 'MachDasFuerAlleEbenen', `MachEinNeuesElementFuerAlleEbenen(this.id, ${stelle}, "${plane}", ${levelNr}, "${wer}")`, 'In allen Ebenen erstellen');
+  		}
+  		ElementCreation_MachDieZwischenZeichnung();
+  	}
+  	
+  	ElementCreation_MachDieZwischenZeichnung = function(){
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const canvasId = 'ElementCreationZwischenZeichnungCanvas';
+  		const existingCanvas = $(canvasId);
+  		if (!existingCanvas) {
+	  		const canvas = document.createElement('canvas');
+	  		canvas.setAttribute('id', canvasId);
+	  		canvas.setAttribute('class', 'bild');
+	  		$('Bilder').appendChild(canvas);
+  		}
+  		const width = aktuellerCharakter.Bild.Width;
+  		const height = aktuellerCharakter.Bild.Height;
+  		const canvas = $(canvasId);
+  		canvas.width = width;
+  		canvas.height = height;
+  		const context = canvas.getContext('2d');
+  		const element = ElementCreationContainerAnzeigeElement.value;
+  		if (element == "Stempel") {
+	  		const welcheNummer = "";
+	  		const idWert = ElementCreationContainerAnzeigeIdWert.value;
+	  		const stempelArray = aktuellerCharakter.Stempel.WelcheGibtEs;
+	  		for (let stempelNr in stempelArray) {
+		  		if (stempelArray[stempelNr][0] == idWert) {
+			  		const stempelElemente = stempelArray[stempelNr][1];
+			  		for (let index = 0; index < stempelElemente.length; index++) {
+				  		const stempelElement = stempelElemente[index];
+				  		const elementType = stempelElement[0];
+				  		const args = stempelElement.slice(1);
+				  		Objekt.CanvasElemente[elementType].apply(null, [context].concat(args));
+			  		}
+			  		break;
+		  		}
+  			}
+  		}else{
+  			let textVary = "";
+  			const position = ElementCreationContainerAnzeigePositionWert.value;
+  			const elementData = Objekt.Daten.SchummelArray[element];
+	  		for(let dataNr in elementData){
+		  		if(dataNr > 0){
+		  			const inputId = 'ElementCreationContainerAnzeige' + elementData[dataNr][0];
+		  			const propValue = $(inputId).value;
+		  			textVary += "'" + propValue + "'";
+		  			if(dataNr < elementData.length - 1){
+		  				textVary += ",";
+		  			}
+		  		}
+	  		}
+	  		eval("Objekt.CanvasElemente[element](context," + textVary + ");");
+  		}
+  		ElementCreationContainerAnzeigeZwischenZeichnung.src = canvas.toDataURL();
+  	}
+  	
+  	MachEinNeuesElement = function(id, stelle, plane, levelNr, wer, modus) {
+	  	ElementCreationContainer.style.display = "none";
+	  	const neuesElement = [];
+	  	const element = ElementCreationContainerAnzeigeElement.value;
+	  	const position = ElementCreationContainerAnzeigePositionWert.value;
+	  	let zielArray;
+	  	if (modus === "Bestandteil") {
+		  	zielArray = CB.GegnerSchablone[AktuelleCharakter][plane + levelNr].CanvasElemente.Alle;
+	  	} else if (modus === "Stempel") {
+		  	zielArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1];
+	  	}
+			for (const [propName, label] of Objekt.Daten.SchummelArray[element]) {
+		  	const inputId = 'ElementCreationContainerAnzeige' + propName;
+		  	const propValue = $(inputId).value;
+		  	neuesElement.push(propValue);
+	  	}
+	  	zielArray.splice(position, 0, neuesElement);
+	  	if (modus === "Bestandteil") {
+		  	CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+	  	} else if (modus === "Stempel") {
+		  	CB.GegnerSchablone.MalDieBilder("Alle");
+	  	}
+	  	CB.ZeigDasBild(wer, plane, levelNr, modus);
+  	}
+  	
+	MachEinNeuesElementFuerAlleEbenen = function(id, stelle, plane, levelNr, wer) {
+		ElementCreationContainer.style.display = "none";
+		for (let bildNr = 0; bildNr < CB.GegnerSchablone[AktuelleCharakter].Bild.Anzahl; bildNr++) {
+			const zielArray = CB.GegnerSchablone[AktuelleCharakter][plane + bildNr].CanvasElemente.Alle;
+			const element = ElementCreationContainerAnzeigeElement.value;
+			const position = ElementCreationContainerAnzeigePositionWert.value;
+			const neuesElement = [];
+			for (const [propName, label] of Objekt.Daten.SchummelArray[element]) {
+				const inputId = 'ElementCreationContainerAnzeige' + propName;
+				const propValue = $(inputId).value;
+				neuesElement.push(propValue);
+			}
+			zielArray.splice(position, 0, neuesElement);
+		}
+		CB.GegnerSchablone.MalDieBilder("Alle");
+		CB.ZeigDasBild(wer, plane, levelNr, "Bestandteil");
+	}
+  	
+  	ElementeLoeschenAbfrage = function() {
+	  	let text = "Willst du nur diese Stelle löschen?";
+	  	if (confirm(text)) {
+	  		ElementeLoeschen("Stelle");
+	  	} else {
+	  		text = "Willst du nur diese Reihe löschen?";
+	  		if (confirm(text)) {
+				ElementeLoeschen("Reihe");
+			} else {
+	 		 	text = "Willst du wirklich alle Elemente löschen?\nEs gibt noch keinen Undo-Button.";
+	  			if (confirm(text)) {
+	  				ElementeLoeschen("Alle");
+	 		 	}
+	 	 	}
+	  	}
+  	}
+  	
+  	ElementeLoeschen = function(modus) {
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+	  	if (modus === "Stelle" || modus === "Reihe") {
+		  	if (CB.WelchesBildIstGeradeAusgesuchtName !== "") {
+			  	const start = (modus === "Stelle") ? CB.WelchesBildIstGeradeAusgesuchtNummer : 0;
+			  	const end = (modus === "Stelle") ? CB.WelchesBildIstGeradeAusgesuchtNummer + 1 : aktuellerCharakter.Bild.Anzahl;
+			  	for (let j = start; j < end; j++) {
+				  	aktuellerCharakter[CB.WelchesBildIstGeradeAusgesuchtName + j].CanvasElemente.Alle = [];
+			  	}
+		  	}
+		} else 
+		if (modus === "Alle") {
+			Object.values(aktuellerCharakter.WelcheGibtEs).forEach(array => {
+		  		aktuellerCharakter[array[0]].CanvasElemente.Alle = [];
+		  	});
+  		}
+  	
+  		CB.GegnerSchablone.MalDieBilder("Alle");
+  		CB.ZeigDasBild(CB.WelchesBildIstGeradeAusgesuchtWer, CB.WelchesBildIstGeradeAusgesuchtName, CB.WelchesBildIstGeradeAusgesuchtNummer, "Bestandteil");
+  	}
+  	
+  	WaehleDiesesElementAus = function(id, stelle, plane, levelNr, wer, neueStelle, modus) {
+	  	AktuelleBildAuswahl.style.border = "0.3vh solid black";
+	  	let array;
+	  	if (modus === "Bestandteil") {
+	 	 	array = CB.GegnerSchablone[AktuelleCharakter][plane + levelNr].CanvasElemente.Alle;
+	  	} else if (modus === "Stempel") {
+	 	 	array = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1];
+	  	}
+	  	ElementCreationContainer.style.display = "none";
+	  	for (let elementId of CB.WelcheElementeWurdenErstellt) {
+		  	$(elementId).style.border = "0.2vh solid black";
+	  	}
+	  	if (typeof neueStelle === "number") {
+		  	$(plane + levelNr + "CanvasElement" + neueStelle).style.border = "0.2vh solid red";
+		  	stelle = neueStelle;
+		} else {
+		  	$(id).style.border = "0.2vh solid red";
+	  	}
+		OptionsContainerId.innerHTML = id;
+	  	OptionsContainerAnzeige.innerHTML = "";
+	  	ElementCreationContainerAnzeige.innerHTML = "";
+	  	var id = "OptionsContainerAnzeige";
+	  	var p, id2;
+	  	id2 = 'OptionsContainerAnzeigeLoeschen';
+	  	createButtonElement(id, id2, 'OptionsContainerAnzeigeLoeschen', 'CB.GegnerSchablone.LoescheDiesesElement(this.id,' + stelle + ',"' + plane + '",' + levelNr + ',"' + wer + '","' + modus + '")', "Dieses Element Löschen");
+	  	if (array[stelle][0] === "Stempel") {
+		  	id2 = 'CB.WelcheStempelIstGeradeAusgesuchtElement';
+		  	createButtonElement(id, id2, 'OptionsContainerAnzeigeDiesenStempelBearbeiten', 'DieseStempelBearbeiten(' + stelle + ',"' + plane + '",' + levelNr + ',"' + wer + '")', "Stempel Bearbeiten");
+	  	}
+		id2 = 'OptionsContainerAnzeigeDiesesElementDuplizieren';
+		createButtonElement(id, id2, 'OptionsContainerAnzeigeDiesesElementDuplizieren', 'CB.GegnerSchablone.DiesesElementDuplizieren(this.id,' + stelle + ',"' + plane + '",' + levelNr + ',"' + wer + '","' + modus + '")', "Element duplizieren"); 	
+	  	if (stelle > 0) {
+		  	id2 = 'OptionsContainerAnzeigeHoch';
+		  	createButtonElement(id, id2, 'OptionsContainerAnzeigeHoch', 'CB.GegnerSchablone.VerschiebeDiesesElement(this.id,' + stelle + ',"' + plane + '",' + levelNr + ',"' + wer + '","Hoch","' + modus + '")', "↑");
+	  	}
+	  	if (stelle < CB.WelcheElementeWurdenErstellt.length - 1) {
+		  	id2 = 'OptionsContainerAnzeigeRunter';
+		  	createButtonElement(id, id2, 'OptionsContainerAnzeigeRunter', 'CB.GegnerSchablone.VerschiebeDiesesElement(this.id,' + stelle + ',"' + plane + '",' + levelNr + ',"' + wer + '","Runter","' + modus + '")', "↓");
+	  	}
+  	}
+  	
+	AenderDasAusgewaehlteElement = function(wer){
+  		CB.WelchesElementSollErstelltWerden = wer.value;
+  	}
+  	
+  	CB.ZeigDasBild = function(wer, plane, levelNr, modus){
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		CB.WelchesBildIstGeradeAusgesuchtWer = wer;
+  		CB.WelchesBildIstGeradeAusgesuchtName = plane;
+  		CB.WelchesBildIstGeradeAusgesuchtNummer = levelNr;
+  		AktuelleBildAuswahl.style.border = "0.3vh solid black";
+  		ElementCreationContainer.style.display = "none";
+  		if(modus == "Stempel"){
+  			OptionsContainerId.innerHTML = aktuellerCharakter.Stempel.WelcheGibtEs[levelNr][0];
+  		}else
+  		if(modus == "Bestandteil"){
+  			OptionsContainerId.innerHTML = wer;
+  		}
+  		OptionsContainerAnzeige.innerHTML = "";
+  		ElementCreationContainerAnzeige.innerHTML = "";
+  		if(plane != ""){
+  			const elementMoverOeffnen = createButtonElement("OptionsContainerAnzeige", "OptionsContainerAnzeigeElementeMoverOeffnenButton", "OptionsContainerAnzeigeElementeMoverOeffnenButton", 'ElementeMover.Check()', "ElementeMover Oeffnen");
+  			createButtonElement("OptionsContainerAnzeige", "OptionsContainerAnzeigeElementHinzufuegenButton", "OptionsContainerAnzeigeElementHinzufuegenButton", 'ElementCreationContainerAnzeigen("OptionsContainerAnzeigeElementHinzufuegenButton", '+all+', "'+plane+'", '+levelNr+', "'+wer+'", "'+modus+'")', "Element hinzufügen");
+  			if (modus === "Bestandteil") {
+  				createButtonElement("OptionsContainerAnzeige", "OptionsContainerAnzeigeElementZuStempelButton", "OptionsContainerAnzeigeElementZuStempelButton nonSelect", 'ElementZuStempel("OptionsContainerAnzeigeElementZuStempelButton", '+all+', "'+plane+'", '+levelNr+', "'+wer+'")', "Element zu Stempel");
+  				createInputElement("OptionsContainerAnzeige", "OptionsContainerAnzeigeElementZuStempelId", "OptionsContainerAnzeigeElementZuStempelId nonSelect", "text", "Stempel"+CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs.length);
+  			}
+  			createSelectElement("OptionsContainerAnzeige", "OptionsContainerAnzeigeElementHinzufuegenSelectFeld", 'OptionsContainerAnzeigeElementHinzufuegenSelectFeld', 'AenderDasAusgewaehlteElement(this)')
+  			for(typen in Objekt.Daten.Struktur.WelcheGibtEs){
+  				var elementTyp = Objekt.Daten.Struktur.WelcheGibtEs[typen];
+  				createOptionElement("OptionsContainerAnzeigeElementHinzufuegenSelectFeld", "OptionsContainerAnzeigeElementHinzufuegenSelectFeld"+elementTyp, 'OptionsContainerAnzeigeElementHinzufuegenSelectFeldOption', elementTyp, elementTyp)
+  			}
+  			OptionsContainerAnzeigeElementHinzufuegenSelectFeld.value = CB.WelchesElementSollErstelltWerden;
+  		}
+  		for(let teile in aktuellerCharakter.WelcheGibtEs){
+  			$(aktuellerCharakter.WelcheGibtEs[teile][1]).style.border = "0.3vh solid black";
+		}
+ 		for(let bildNr = 0; bildNr < aktuellerCharakter.Bild.Anzahl; bildNr++){
+  			$('Bild' + bildNr).style.border = "0.3vh solid black";
+  		}
+  		if(modus == "Bestandteil"){
+  			$(wer).style.border = "0.3vh solid blue";
+  			AktuelleBildAuswahlBild.src = $(wer + "Bild").src;
+  		}else
+  		if(modus == "Stempel"){
+  			createCanvasElement('StempelCanvasElementContainer', 'StempelCanvasElement', 'bild', aktuellerCharakter.Bild.Width, aktuellerCharakter.Bild.Height);
+  			var canvas = $('StempelCanvasElement');
+  			var ctx = canvas.getContext('2d');
+			for(let all in aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1]){
+				const array = aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1][all];
+				const element = array[0];
+				let textVary  =  "";
+				for(let each in Objekt.Daten.SchummelArray[element]){
+					if(each>0){
+						textVary += "'" + array[each] + "'";
+						if(each < Objekt.Daten.SchummelArray[element].length - 1){
+							textVary += ",";
+						}
+					}
+				}
+				eval("Objekt.CanvasElemente[element](ctx," + textVary + ");");
+  			}
+  			AktuelleBildAuswahlBild.src = canvas.toDataURL();
+  		}
+  		AktuelleBildAuswahl.onclick = function(){
+  			CB.ZeigDasBild(wer, plane, levelNr, modus);
+  			AktuelleBildAuswahl.style.border = "0.3vh solid red";
+  		};
+  		if(plane != ""){
+  			if(modus == "Bestandteil"){
+  				MachDieElemente(wer, plane, levelNr, aktuellerCharakter[plane+levelNr].CanvasElemente.Alle, "Bestandteil");
+  			}else
+  			if(modus == "Stempel"){
+  				MachDieElemente(wer, plane, levelNr, aktuellerCharakter.Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1], "Stempel");
+  			}
+  		}
+  	}
+  
+  	TauschDenStempelAus = function(Nr, Nr2, plane, levelNr, modus, wer) {
+  		const aktuellerCharakterArray = CB.GegnerSchablone[AktuelleCharakter];
+	  	const arrayAltername = aktuellerCharakterArray[plane + levelNr].CanvasElemente.Alle;
+	  	const alterNameVary = arrayAltername[Nr][1];
+	  	const neuerStempelname = TauschDenStempelAusSelectFeld.value;
+	  	if (TauschDenStempelAusFuerAlleCheckbox.checked) {
+		  	for (const all in aktuellerCharakterArray.WelcheGibtEs) {
+			  	const array = aktuellerCharakterArray.WelcheGibtEs[all];
+			  	const nameVary = array[0];
+			  	for (const each in aktuellerCharakterArray[nameVary].CanvasElemente.Alle) {
+				  	const array2 = aktuellerCharakterArray[nameVary].CanvasElemente.Alle[each];
+				  	for (const alle in array2) {
+					  	if (array2[alle] === alterNameVary) {
+						  	array2[alle] = neuerStempelname;
+					  	}
+				  	}
+			  	}
+			}
+		 	CB.GegnerSchablone.MalDieBilder("AlleWoDerStempelIst", neuerStempelname);
+		} else {
+		  	arrayAltername[Nr][1] = neuerStempelname;
+		  	CB.GegnerSchablone.MalDieBilder([plane, levelNr]);
+	  	} 	
+	  	CB.ZeigDasBild(wer, plane, levelNr, modus);
+	  	$("TauschDenStempelAus").close();
+  	}
+  	
+  	TauschDenStempelAusAnzeigen = function(stempelName){
+  		TauschDenStempelAusAlterName.innerHTML = stempelName;
+  		$("TauschDenStempelAus").show();
+  	}
+  	
+	MachDieElemente = function(wer, plane, levelNr, array, modus) {
+		const canvasElementContainer = document.getElementById('CanvasElementContainer');
+		canvasElementContainer.innerHTML = "";
+		if (plane !== "") {
+			CB.WelcheElementeWurdenErstellt = [];
+			array.forEach((element, all) => {
+				const canvasElementId = plane + levelNr + 'CanvasElement' + all;
+				const canvasElement = document.createElement('div');
+				canvasElement.setAttribute('id', canvasElementId);
+				canvasElement.setAttribute('class', 'BildCanvasElementContainer');
+				canvasElement.setAttribute('onclick', `WaehleDiesesElementAus('${canvasElementId}', ${all}, '${plane}', ${levelNr}, '${wer}', ${all}, '${modus}')`);
+				canvasElement.style.top = (103 * all) + 13 + "px";
+				canvasElementContainer.appendChild(canvasElement);
+				CB.WelcheElementeWurdenErstellt[CB.WelcheElementeWurdenErstellt.length]=canvasElementId;
+				const welcherTyp = element[0];
+				element.forEach((value, each) => {
+					const inputId = `CanvasElement${all}_${each}`;
+					const input = document.createElement('input');
+					input.setAttribute('id', inputId);
+					input.setAttribute('class', `BildCanvasElementInput ${welcherTyp}BildCanvasElement${Objekt.Daten.SchummelArray[welcherTyp][each][0]}`);
+					input.setAttribute('value', value);
+					if (welcherTyp !== "Stempel" || Objekt.Daten.SchummelArray[welcherTyp][each][1] !== "Id") {
+						input.addEventListener('change', () => CB.GegnerSchablone.AenderDenWert(input.value,  all,  each,  plane, levelNr, modus));							
+					}else{
+						input.setAttribute('onclick', 'TauschDenStempelAusAnzeigen("' + array[all][each] + '")');
+						TauschDenStempelAusSelectFeldOptionenErstellen();
+						TauschDenStempelAusButton.onclick=function(){TauschDenStempelAus(all, each, plane, levelNr, modus, wer)};
+					}
+					const labelId = `CanvasElement${all}_${each}Lable`;
+					const label = document.createElement('div');
+					label.setAttribute('id', labelId);
+					label.setAttribute('class', `BildCanvasElementInputLable ${welcherTyp}BildCanvasElement${Objekt.Daten.SchummelArray[welcherTyp][each][0]}Lable`);
+					if (welcherTyp !== "Stempel" || Objekt.Daten.SchummelArray[welcherTyp][each][1] !== "Id") {
+						label.addEventListener('click', () => document.getElementById(inputId).select());
+					}
+					label.innerHTML = Objekt.Daten.SchummelArray[welcherTyp][each][1];
+					canvasElement.appendChild(input);
+					canvasElement.appendChild(label);
+				});
+				const canvasElementBildContainer = document.createElement('div');
+				canvasElementBildContainer.setAttribute('class', 'BildCanvasElementBild');
+				canvasElement.appendChild(canvasElementBildContainer);
+				const canvasElementBildContainerCanvas = document.createElement('canvas');
+				canvasElementBildContainerCanvas.setAttribute('class', 'bild');
+				canvasElementBildContainer.appendChild(canvasElementBildContainerCanvas);
+				const ctx = canvasElementBildContainerCanvas.getContext('2d');
+				const width = CB.GegnerSchablone[AktuelleCharakter].Bild.Width;
+				const height = CB.GegnerSchablone[AktuelleCharakter].Bild.Height;
+				canvasElementBildContainerCanvas.width = width;
+				canvasElementBildContainerCanvas.height = height;
+				const elementName = element[0];
+				if (Objekt.CanvasElemente.hasOwnProperty(elementName)) {
+					Objekt.CanvasElemente[elementName](ctx, ...element.slice(1));
+				}
+				const canvasElementBildContainerImage = document.createElement('img');
+				canvasElementBildContainerImage.setAttribute('class', 'bildAuto');
+				canvasElementBildContainer.appendChild(canvasElementBildContainerImage);
+				canvasElementBildContainerImage.src = canvasElementBildContainerCanvas.toDataURL();
+			});
+		}
+	}
+  
+  	CB.ErstelleDieBilder = function() {
+	  	$("BildContainerReal").innerHTML = "";
+	  	const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+	  	const bildData = aktuellerCharakter.Bild;
+	  	const bildAnzahl = bildData.Anzahl;
+	  	const bildBestandteile = bildData.Bestandteile;
+	  	const gesamtHoehe = 55;
+	  	let teilHoehe = gesamtHoehe / bildAnzahl;
+	  	const gesamtBreite = 75;
+	  	let teilBreite = gesamtBreite / bildBestandteile.length;
+	   	if (bildAnzahl < 9) {
+		  	teilHoehe = gesamtHoehe / 8;
+		  	if (bildBestandteile.length <= 4) {
+			  	teilBreite = gesamtBreite / 4;
+		  	} else if (bildBestandteile.length > 4) {
+			  	teilHoehe = teilBreite / 3;
+		  	}
+		} else if (bildAnzahl > 8) {
+		  	if ((1 * 1 + teilBreite * 1) * bildBestandteile.length > gesamtBreite && (1 * 1 + teilHoehe * 1) * bildAnzahl < gesamtHoehe) {
+			  	teilHoehe = teilBreite / 3;
+		  	} else {
+			  	teilBreite = teilHoehe * 3;
+		  	}
+	  	}
+	  	for (let bildNr = 0; bildNr < bildAnzahl; bildNr++) {
+		  	let bildId = "BildContainerReal";
+		  	let containerId = 'Bild' + bildNr;
+		  	createButtonElement(bildId, containerId, 'BildKlasse', 'CB.ZeigDasBild("' + containerId + '","", ' + bildNr + ', "Bestandteil")', '');
+		  	$(containerId).style.top = teilHoehe * bildNr + 1 + "%";
+		  	$(containerId).style.left = "2%";
+		  	$(containerId).style.width = teilBreite - 2 + "%";
+		  	$(containerId).style.height = teilHoehe - 1 + "%";
+		  	let imgId = 'Bild' + bildNr + 'Bild';
+		  	let img = createImageElement(containerId, imgId, 'bild', '');
+		  	for (let teilNr = 0; teilNr < bildBestandteile.length; teilNr++) {
+			  	let teil = bildBestandteile[teilNr];
+			  	let teilContainerId = 'Bild' + bildNr + teil;
+			  	let onclick = 'CB.ZeigDasBild("' + teilContainerId + '","' + teil + '", ' + bildNr + ', "Bestandteil")';
+			  	createButtonElement(bildId, teilContainerId, 'BildKlasse', onclick, '');
+			  	$(teilContainerId).style.top = teilHoehe * bildNr + 1 + "%";
+			  	$(teilContainerId).style.left = teilBreite * teilNr + 22 + "%";
+			  	$(teilContainerId).style.width = teilBreite - 2 + "%";
+			  	$(teilContainerId).style.height = teilHoehe - 1 + "%";
+			  	let teilImgId = 'Bild' + bildNr + teil + 'Bild';
+			  	let teilImg = createImageElement(teilContainerId, teilImgId, 'bild', '');
+		  	}
+	  	}
+  	};
+  	
+  	FarbenContainerCheck = function(){
+  		if(FarbenContainer.style.display == "block"){
+  			FarbenContainer.style.display = "none";
+  			CB.WelcheFarbeIstGeradeAusgesuchtNummer = "leer";
+  			CB.WelcheFarbeIstGeradeAusgesuchtElement = "leer";
+  			FarbenAnzeigeContainerNameAendernInput.value = "";
+  			FarbenAnzeigeContainerNameAendernInput.style.display = "none";
+  			FarbenContainer_FarbAnzeigeContainer.style.display = "none";
+  			FarbenContainer_FuellungAnzeigeContainer.style.display = "none";
+  			FarbenAnzeigeContainerFuellungenAnzeigeContainer.style.display = "none";
+  			FarbenAnzeigeContainerValueAendernInput.style.display = "none";
+  			FarbenContainerFuellungHinzufuegenButton.style.display = "none";
+  			FarbenContainerFuellungHinzufuegenTypInput.style.display = "none";
+  			FarbenContainerFuellungHinzufuegenEbeneInput.style.display = "none";
+  			FarbenContainerDieseFarbeLoeschenButton.style.display = "none";
+  			FarbenContainerDieseFarbeDuplizierenButton.style.display = "none";
+  			FarbenContainerFarbsucherButton.style.display = "none";
+  			FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display = "none";
+  			FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "none";
+  			$("FS_MainContainer").close();
+  		}else{
+  			FarbenContainer.style.display = "block";
+  			FarbenAnzeigeContainerAnzeigen();
+  		}
+  	}
+  	
+  	FarbenAnzeigeContainerFuellungenBearbeitenContainerCheck = function(){
+	  	if(FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display == "block"){
+		  	FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display = "none";
+		  	FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "none";
+		  	FarbenContainer_FuellungAnzeigeContainer.style.display = "none";
+	//  	CB.WelcheFuellungIstGeradeAusgesuchtElement.style.border = "0.2vh solid black";
+		  	CB.WelcheFuellungIstGeradeAusgesuchtNummer = "leer";
+		  	CB.WelcheFuellungIstGeradeAusgesuchtElement = "leer";
+	  	}else{
+		  	FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display = "block";
+		  	FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen();
+  		}
+  	}
+  	
+  	StempelContainerCheck = function(){
+ 	 	if(StempelContainer.style.display == "block"){
+ 	 		StempelContainer.style.display = "none";
+ 	 	//	CB.WelcheStempelIstGeradeAusgesuchtNummer = "leer";
+ 	 	//	CB.WelcheStempelIstGeradeAusgesuchtElement = "leer";
+ 	 		StempelContainerAnzeigeStempelContainerNameAendernInput.value = "";
+ 	 		StempelContainerAnzeigeStempelContainerNameAendernInput.style.display = "none";
+ 	 		StempelContainerDieseStempelLoeschenButton.style.display = "none";
+ 	 		StempelContainerDieseStempelBearbeitenButton.style.display = "none";
+ 	 		StempelContainerDieseStempelDuplizierenButton.style.display = "none";
+ 	 		StempelContainerCanvasAnzeigeGross.style.display = "none";
+ 	 	}else{
+  			StempelContainer.style.display = "block";
+  			StempelContainerAnzeigen();
+ 	 	}
+  	}
+  	
+  	PatternContainerCheck = function(){
+	  	if(PatternContainer.style.display == "block"){
+	 	 	PatternContainer.style.display = "none";
+	  		CB.WelchePatternIstGeradeAusgesuchtNummer = "leer";
+	  		CB.WelchePatternIstGeradeAusgesuchtElement = "leer";
+	 	 	PatternContainerAnzeigePatternContainerNameAendernInput.value = "";
+	  		PatternContainerAnzeigePatternContainerNameAendernInput.style.display = "none";
+	  		PatternContainerAnzeigePatternContainerAnzeigeCanvas.style.display = "none";
+	  		PatternContainerAnzeigePatternContainerTexturAendernInput.value = "";
+	  		PatternContainerAnzeigePatternContainerTexturAendernInput.style.display = "none";
+	  		PatternContainerAnzeigePatternContainerFarbeAendernInput.value = "";
+	  		PatternContainerAnzeigePatternContainerFarbeAendernInput.style.display = "none";
+	  		PatternContainerFarbsucherButton.style.display = "none";
+	 	 	PatternContainerDiesePatternLoeschenButton.style.display = "none";
+	 	 	$("FS_MainContainer").close();
+	 	}else{
+	  		PatternContainer.style.display = "block";
+ 		 	PatternContainerAnzeigen();
+  		}
+  	}
+  	
+  	PolygoneContainerCheck = function(){
+	  	if(PM_MainContainer.style.display == "block"){
+		  	PM_MainContainer.style.display = "none";
+	  	}else{
+		  	PM_MainContainer.style.display = "block";
+		  	PM.DatabaseObjects = [];
+		  	PM.Polygons = [];
+		  	PM.CreateDatabaseObjectsFromDataArray(CB.GegnerSchablone[AktuelleCharakter].Polygone.WelcheGibtEs);
+		  	PM.LoadPolyponsFromDatabaseObjects();
+		  	PM.ClearAndResetCanvas();
+		  	PM.DisplayPolygonArray();
+	 	 //	PM_MainContainerAnzeigen();
+	  	}
+  	}
+  	
+  	ElementCreationContainerCheck = function(){
+  		if(ElementCreationContainer.style.display == "block"){
+		  	ElementCreationContainer.style.display = "none";
+ 	 	}else{
+ 		 	ElementCreationContainer.style.display = "block";
+ 	 	}
+  	}
+  	
+  	DateienContainerCheck = function(){
+ 	 	if(DateienContainer.style.display == "block"){
+		  	DateienContainer.style.display = "none";
+	  	}else{
+ 		 	DateienContainer.style.display = "block";
+ 		 	DateienContainerAnzeigen();
+ 	 	}
+  	}
+  	
+	DateienContainerAnzeigen = function() {
+	    DateinContainerAnzeige.innerHTML = "";
+	    for (let all in CB.Welt.Charakter.WelcheGibtEs) {
+	        let wer = CB.Welt.Charakter.WelcheGibtEs[all][0];
+	        let flaecheVary = CB.GegnerSchablone[wer].Bild.Width + "x" + CB.GegnerSchablone[wer].Bild.Height;
+	        let ebenenVary = CB.GegnerSchablone[wer].Bild.Anzahl;
+	        let containerId = 'DateinContainerAnzeigeElementContainer' + all;
+	        createButtonElement('DateinContainerAnzeige', containerId, 'DateinContainerAnzeigeElementContainer', 'WaehleDiesenCharakterAus("' + wer + '")', "");
+	        createDivElement(containerId, containerId + 'id', 'DateinContainerAnzeigeElementContainerid', wer);
+	        createDivElement(containerId, containerId + 'Flaeche', 'DateinContainerAnzeigeElementContainerFlaeche', flaecheVary);
+	        createDivElement(containerId, containerId + 'Ebenen', 'DateinContainerAnzeigeElementContainerEbenen', ebenenVary);
+	    }
+	};
+  	
+  	WaehleDiesenCharakterAus = function(wer) {
+	  	CanvasElementContainer.innerHTML = "";
+	  	AM.Bildcounter = 0;
+	  	CB.Welt.Charakter.Ausgewaehlt = wer;
+	  	AktuelleCharakter = CB.Welt.Charakter.Ausgewaehlt;
+	  	CB.ErstelleDieBilder();
+	  	CB.Welt.Charakter.Pattern.Erstellen();
+	  	CB.Welt.Charakter.Farben.Erstellen();
+	  	CB.GegnerSchablone.MalDieBilder("Alle");
+	  	CB.ZeigDasBild("Bild0", "", 0, "Bestandteil");
+	  	DateienContainerCheck();
+	  	CB.GegnerSchablone.Farben.Erstellen(AktuelleCharakter);
+	  	AM.Check();
+	  	window.setTimeout(() => {
+	  	AM.Check();
+	  	}, 100);
+  	};
+  	
+  	OptionsContainer2NeueFarbeContainerCheck = function(){
+ 	 	if(OptionsContainer2NeueFarbeContainer.style.display == "block"){
+		  	OptionsContainer2NeueFarbeContainer.style.display = "none";
+	  	}else{
+ 		 	OptionsContainer2NeueFarbeContainer.style.display = "block";
+ 	 	}
+  	}
+  	
+  	OptionsContainer2NeueStempelContainerCheck = function(){
+  		if(OptionsContainer2NeueStempelContainer.style.display == "block"){
+ 		 	OptionsContainer2NeueStempelContainer.style.display = "none";
+  		}else{
+ 		 	OptionsContainer2NeueStempelContainer.style.display = "block";
+  		}
+  	}
+  	
+  	OptionsContainer2NeuePatternContainerCheck = function(){
+  		if(OptionsContainer2NeuePatternContainer.style.display == "block"){
+  			OptionsContainer2NeuePatternContainer.style.display = "none";
+ 	 	}else{
+  			OptionsContainer2NeuePatternContainer.style.display = "block";
+  		}
+  	}
+  	ElementeMover = {};
+	ElementeMover.Check = function(){
+  		if(ElementeMover_MainContainer.style.display == "block"){
+  			ElementeMover_MainContainer.style.display = "none";
+ 	 	}else{
+  			ElementeMover_MainContainer.style.display = "block";
+  		}
+  	}
+  	
+  	AenderDieseFuellungContainerOeffnen = function(element, farbNrVary, Nr){
+  		if(FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display == "block"){
+  			FarbenAnzeigeContainerFuellungenBearbeitenContainerCheck();
+  		}
+  		CB.WelcheFuellungIstGeradeAusgesuchtNummer = Nr;
+  		CB.WelcheFuellungIstGeradeAusgesuchtElement = $(element);
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerCheck();
+  	}
+
+  	FarbenAnzeigeContainerAuswaehlen = function(element, farbNrVary) {
+  		const farbenArray = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs;
+  		const fuellungenArray = farbenArray[farbNrVary][2];
+	  	FarbenAnzeigeContainerFuellungenAnzeigeContainer.innerHTML = "";
+	  	for (let fuellungNr in fuellungenArray) {
+		  	const welchesElement = "FarbenAnzeigeContainerFuellungenAnzeigeContainer";
+		  	const welchesElement2 = 'Fuellung' + fuellungNr;
+		  	createButtonElement(welchesElement, welchesElement2, 'fuellungContainer', 'AenderDieseFuellungContainerOeffnen("' + welchesElement2 + '","' + farbNrVary + '","' + fuellungNr + '")', fuellungenArray[fuellungNr][0]);
+	  	}
+	  	for (let farbNr in farbenArray) {
+		  	const welchesElement2 = 'FarbenAnzeigeContainerFarbe' + farbNr;
+		  	$(welchesElement2).style.border = "0.2vh solid black";
+		  	if (farbNr == farbNrVary) {
+		  		$(welchesElement2).style.border = "0.2vh solid red";
+		  	}
+	  	}
+	  	if (typeof farbenArray[farbNrVary][2] == "object") {
+		  	$("FarbenContainerFuellungHinzufuegenEbeneInput").innerHTML = "";
+		  	for (let fuellungNr = 0; fuellungNr <= fuellungenArray.length; fuellungNr++) {
+			  	const welchesElement = "FarbenContainerFuellungHinzufuegenEbeneInput";
+			  	const welchesElement2 = "FarbenContainerFuellungHinzufuegenEbeneInputOption" + fuellungNr;
+			  	createOptionElement(welchesElement, welchesElement2, 'option', fuellungNr, fuellungNr);
+		  	}
+	  	}
+	  	CB.WelcheFarbeIstGeradeAusgesuchtNummer = farbNrVary;
+	  	CB.WelcheFarbeIstGeradeAusgesuchtElement = element;
+	  	if (CB.WelcheFarbeIstGeradeAusgesuchtElement != "leer") {
+	  	}
+	  	const idVary = $('FarbenAnzeigeContainerFarbe' + farbNrVary + 'id').innerHTML;
+	  	FarbenAnzeigeContainerNameAendernInput.value = idVary;
+	  	const valueVary = $('FarbenAnzeigeContainerFarbe' + farbNrVary + 'Value').innerHTML;
+	  	FarbenAnzeigeContainerValueAendernInput.value = valueVary;
+	  	FarbenAnzeigeContainerNameAendernInput.style.display = "block";
+	  	FarbenContainer_FarbAnzeigeContainer.style.display = "block";
+	  	//FarbenContainer_FuellungAnzeigeContainer.style.display="block";
+	  	$("FarbenContainer_FarbAnzeige").src = $('FarbenAnzeigeContainerFarbe' + farbNrVary + 'FarbAnzeige').toDataURL();
+	  	FarbenAnzeigeContainerFuellungenAnzeigeContainer.style.display = "block";
+	  	FarbenAnzeigeContainerValueAendernInput.style.display = "block";
+	  	FarbenContainerFuellungHinzufuegenButton.style.display = "block";
+	  	FarbenContainerFuellungHinzufuegenTypInput.style.display = "block";
+	  	FarbenContainerFuellungHinzufuegenEbeneInput.style.display = "block";
+	  	FarbenContainerDieseFarbeLoeschenButton.style.display = "block";
+	  	FarbenContainerDieseFarbeDuplizierenButton.style.display = "block";
+	  	FarbenContainerFarbsucherButton.style.display = "block";
+  	};
+  	
+  	StempelContainerAnzeigeStempelContainerAuswaehlen = function(element, stempelNrVary) {
+	  	for (let stempelNr in CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs) {
+		  	const welchesElement2 = 'StempelContainerAnzeigeStempel' + stempelNr;
+		  	$(welchesElement2).style.border = "0.2vh solid black";
+	  	}
+	  	element.style.border = "0.2vh solid red";
+	  	CB.WelcheStempelIstGeradeAusgesuchtNummer = stempelNrVary;
+	  	CB.WelcheStempelIstGeradeAusgesuchtElement = element;
+	  	if (CB.WelcheStempelIstGeradeAusgesuchtElement != "leer") {
+		  	const idVary = $('StempelContainerAnzeigeStempel' + stempelNrVary + 'id').innerHTML;
+		  	StempelContainerAnzeigeStempelContainerNameAendernInput.value = idVary;
+		  	StempelContainerAnzeigeStempelContainerNameAendernInput.style.display = "block";
+		  	StempelContainerDieseStempelLoeschenButton.style.display = "block";
+		  	StempelContainerDieseStempelBearbeitenButton.style.display = "block";
+		  	StempelContainerDieseStempelDuplizierenButton.style.display = "block";
+		  	StempelContainerCanvasAnzeigeGross.style.display = "block";
+		  	const stempelArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer];
+		  	const width = CB.GegnerSchablone[AktuelleCharakter].Bild.Width;
+		  	const height = CB.GegnerSchablone[AktuelleCharakter].Bild.Height;
+		  	const canvas = $("StempelContainerCanvasAnzeigeGross");
+		  	canvas.width = width;
+		  	canvas.height = height;
+		  	const ctx = canvas.getContext('2d');
+		  	Objekt.CanvasElemente["Stempel"](ctx, stempelArray[0], 0, 0, 1, 1, 0, 0, 0);
+	  	}
+  	};
+  	
+  	MachDiePatternContainerAnzeigePatternContainerAnzeigeCanvas = function() {
+	  	const width = CB.GegnerSchablone[AktuelleCharakter].Bild.Width;
+	  	const height = CB.GegnerSchablone[AktuelleCharakter].Bild.Height;
+	  	const canvas = PatternContainerAnzeigePatternContainerAnzeigeCanvas;
+	  	canvas.width = width;
+	  	canvas.height = height;
+	  	const ctx = canvas.getContext('2d');
+	  	ctx.fillStyle = "rgba(255,255,255,1)";
+	  	ctx.fillRect(0, 0, width, height);
+	  	ctx.beginPath();
+	  	ctx.moveTo(0, 0);
+	  	ctx.lineTo(0, height);
+	  	ctx.lineTo(width, height);
+	  	ctx.lineTo(width, 0);
+	  	ctx.closePath();
+	  	const gradient = ctx.createPattern($(CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[CB.WelchePatternIstGeradeAusgesuchtNummer][0]), "repeat");
+	  	gradientVary = gradient;
+	  	ctx.fillStyle = gradientVary;
+	  	ctx.fill();
+  	};
+  	
+  	PatternContainerAnzeigePatternContainerAuswaehlen = function(element, patternNummer) {
+	  	const patternArray = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs;
+	  	for (let patternNr in patternArray) {
+		  	$('PatternContainerAnzeigePattern' + patternNr).style.border = "0.2vh solid black";
+	  	}
+	  	element.style.border = "0.2vh solid red";
+	  	CB.WelchePatternIstGeradeAusgesuchtNummer = patternNummer;
+	  	CB.WelchePatternIstGeradeAusgesuchtElement = element;
+	  	if (CB.WelchePatternIstGeradeAusgesuchtElement != "leer") {
+		  	const idVary = patternArray[patternNummer][0];
+		  	PatternContainerAnzeigePatternContainerNameAendernInput.value = idVary;
+		  	PatternContainerAnzeigePatternContainerNameAendernInput.style.display = "block";
+		  	PatternContainerAnzeigePatternContainerAnzeigeCanvas.style.display = "block";
+		  	const texturVary = patternArray[patternNummer][1][0];
+		  	PatternContainerAnzeigePatternContainerTexturAendernInput.value = texturVary;
+		  	PatternContainerAnzeigePatternContainerTexturAendernInput.style.display = "block";
+		  	const farbeVary = patternArray[patternNummer][1][1];
+		  	PatternContainerAnzeigePatternContainerFarbeAendernInput.value = farbeVary;
+		  	PatternContainerAnzeigePatternContainerFarbeAendernInput.style.display = "block";
+		  	PatternContainerFarbsucherButton.style.display = "block";
+		  	PatternContainerDiesePatternLoeschenButton.style.display = "block";
+		  	MachDiePatternContainerAnzeigePatternContainerAnzeigeCanvas();
+	  	}
+  	};
+
+  	MachDieFarbenContainer_FuellungAnzeige = function(){
+  		let gradient;
+		const farbenArray = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2][CB.WelcheFuellungIstGeradeAusgesuchtNummer];
+		const width = CB.GegnerSchablone[AktuelleCharakter].Bild.Width;
+		const height = CB.GegnerSchablone[AktuelleCharakter].Bild.Height;
+  		const canvas = $('FarbenContainer_FuellungAnzeige');
+  		canvas.width = width;
+  		canvas.height = height;
+  		const ctx = canvas.getContext('2d');
+  		ctx.fillStyle = "white";
+  		ctx.fillRect(0, 0, width, height);
+  		ctx.fillStyle = farbenArray[1];
+  		ctx.fillRect(0, 0, width, height);
+  		if(farbenArray[0] == "Pattern"){
+  			ctx.fillStyle = "white";
+  			ctx.fillRect(0, 0, width, height);
+  			ctx.scale(farbenArray[1][2], farbenArray[1][3]);
+  			ctx.translate(farbenArray[1][4], farbenArray[1][5]);
+  			ctx.globalAlpha = farbenArray[1][6];
+  			ctx.rotate(farbenArray[1][7]);
+  			ctx.beginPath();
+  			ctx.moveTo(-width * 2, -height * 2);
+  			ctx.lineTo(-width * 2, height * 4);
+  			ctx.lineTo(width * 4, height * 4);
+  			ctx.lineTo(width * 4, -height * 2);
+  			ctx.closePath();
+  			gradient = ctx.createPattern($(farbenArray[1][0]), farbenArray[1][1]);
+  			ctx.fillStyle = gradient;
+  			ctx.fill();
+  			ctx.rotate(-farbenArray[1][7]);
+  			ctx.globalAlpha = 1;
+  			ctx.translate(-farbenArray[1][4], -farbenArray[1][5]);
+  			ctx.scale(1 / farbenArray[1][2], 1 / farbenArray[1][3]);
+  		}
+  		for(let fuellungen in farbenArray[2]){
+  			ctx.beginPath();
+  			ctx.moveTo(0, 0);
+  			ctx.lineTo(0, height);
+  			ctx.lineTo(width, height);
+  			ctx.lineTo(width, 0);
+  			ctx.closePath();
+  			if(farbenArray[0] == "Radial"){
+  				let maasseVary = farbenArray[1];
+  				gradient = ctx.createRadialGradient(maasseVary[0], maasseVary[1], maasseVary[2], maasseVary[3], maasseVary[4], maasseVary[5]);
+  			}else
+  			if(farbenArray[0] == "Linear"){
+  				let maasseVary = farbenArray[1];
+  				gradient = ctx.createLinearGradient(maasseVary[0], maasseVary[1], maasseVary[2], maasseVary[3]);
+  			}
+  			if(farbenArray[0] == "Linear"||farbenArray[0] == "Radial"){
+  				for(let grad in farbenArray[2]){
+  					let gradVary = farbenArray[2][grad];
+  					gradient.addColorStop(gradVary[0], gradVary[1]);
+  				}
+  				ctx.fillStyle = gradient;
+  				ctx.fill();
+  			}
+  		}
+  	}
+
+  	FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen = function(){
+		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const farbIndex = CB.WelcheFarbeIstGeradeAusgesuchtNummer;
+  		const fuellungIndex = CB.WelcheFuellungIstGeradeAusgesuchtNummer;
+  		const farbArray = aktuellerCharakter.Farben.WelcheGibtEs[farbIndex];
+  		const fuellungElementeArray = farbArray[2];
+		const fuellungArray = fuellungElementeArray[fuellungIndex];
+		const fuellungName = fuellungArray[0];
+		const fuellungData = fuellungArray[1];
+		const timestopArray = fuellungArray[2];
+		const fuellungenBearbeitenContainerId = "FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeige";
+		if(fuellungName == "Linear" || fuellungName == "Radial"){
+			FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopHinzufuegenButton.style.display = "block";
+		}else
+		if(fuellungName == "Pattern"){
+			FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopHinzufuegenButton.style.display = "none";
+		}
+		MachDieFarbenContainer_FuellungAnzeige();
+  		FarbenContainer_FuellungAnzeigeContainer.style.display = "block";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenHochButton.style.display = "none";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenRunterButton.style.display = "none";
+  		if(fuellungElementeArray.length > 1){
+  			if(fuellungIndex > 0){
+  				FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenHochButton.style.display = "block";
+  			}
+  			if(fuellungIndex < fuellungElementeArray.length - 1){
+  				FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenRunterButton.style.display = "block";
+  			}
+  		}
+  		if(fuellungName == "Linear" || fuellungName == "Radial"){
+  			timestopArray.sort();
+  		}
+  		for(let fuellungElementNr in fuellungElementeArray){
+  			const fuellungElementId = 'Fuellung' + fuellungElementNr;
+  			$(fuellungElementId).style.border = "0.2vh solid black";
+  			if(fuellungElementNr == fuellungIndex){
+  				$(fuellungElementId).style.border = "0.2vh solid red";
+  			}
+  		}
+  		$(fuellungenBearbeitenContainerId).innerHTML = "";
+  		const fuellungBearbeitenContainerLable = createDivElement(fuellungenBearbeitenContainerId, fuellungenBearbeitenContainerId + 'Typ' + fuellungIndex, fuellungenBearbeitenContainerId + 'Typ', fuellungName);
+		var fuellungTyp;
+		if (fuellungName === "Radial") {
+			fuellungTyp = "FuellungenRadial";
+		}else
+		if (fuellungName === "Linear") {
+			fuellungTyp = "FuellungenLinear";
+		}
+		if (fuellungName === "Radial" || fuellungName === "Linear") {
+		    fuellungData.forEach((value, werte) => {
+		        const fuellungElementId = 'FuellungElement' + werte;
+		        const fuellungInputElement = createInputElement(fuellungenBearbeitenContainerId, fuellungElementId, 'FuellungInput ' + fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0], 'text', value, 'CB.GegnerSchablone.AenderDenWertFuellung(this.value,' + 1 + ',' + werte + ', "")');
+		        const fuellungElementLabel = createButtonElement(fuellungenBearbeitenContainerId, fuellungElementId + 'Lable', 'FuellungInputLable ' + fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0] + 'Lable', '$("FuellungElement' + werte + '").select()', Objekt.Daten.SchummelArray[fuellungTyp][werte][1]);
+		    });
+		}
+  		else
+  		if(fuellungName == "Pattern"){
+  			for(let werte in fuellungData){
+  				const fuellungDataValue = fuellungData[werte];
+  				const patternArray = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs;
+  				let istDasEinPattern = false;
+  				let welcherPattern = "";
+  				for(let patternNr in patternArray){
+  					if(patternArray[patternNr][0] == fuellungDataValue){
+  						istDasEinPattern = true;
+  						welcherPattern = fuellungDataValue;
+  					}
+  				}
+  				if(istDasEinPattern == true){
+  					var fuellungTyp = "FuellungenPattern";
+  					const fuellungenBearbeitenPatternSelectFeld = createSelectElement(fuellungenBearbeitenContainerId, 'FuellungElement' + werte, 'FuellungInput ' + fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0], 'CB.GegnerSchablone.AenderDenWertFuellung(this.value,' + 1 + ',' + werte + ',"")');
+  					for(let patternNr in patternArray){
+  						const fuellungenBearbeitenPatternSelectFeldOption = createOptionElement('FuellungElement' + werte, "Option" + patternNr, "", patternArray[patternNr][0], patternArray[patternNr][0]);
+  					}
+  				}else
+  				if(fuellungDataValue == "repeat" || fuellungDataValue == "repeat-x" || fuellungDataValue == "repeat-y"){
+  					var fuellungTyp = "FuellungenPattern";
+  					var idFuellungenSelect = 'FuellungElement' + werte;
+  					createSelectElement(fuellungenBearbeitenContainerId, idFuellungenSelect, 'FuellungInput '+ fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0], 'CB.GegnerSchablone.AenderDenWertFuellung(this.value,' + 1 + ',' + werte + ',"")');
+  					createOptionElement(idFuellungenSelect, "OptionRepeat", "", "repeat", "repeat");
+  					createOptionElement(idFuellungenSelect, "OptionRepeatX", "", "repeat-x", "repeat-x");
+  					createOptionElement(idFuellungenSelect, "OptionRepeatY", "", "repeat-y", "repeat-y");
+  					$('FuellungElement' + werte).value = fuellungDataValue;
+  				}else{
+  					var fuellungTyp = "FuellungenPattern";
+  					createInputElement(fuellungenBearbeitenContainerId, 'FuellungElement' + werte, 'FuellungInput ' + fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0], 'text', fuellungDataValue, 'CB.GegnerSchablone.AenderDenWertFuellung(this.value,' + 1 + ',' + werte + ',"")');
+  				}
+  				createButtonElement(fuellungenBearbeitenContainerId, 'FuellungElement' + werte + 'Lable', 'FuellungInputLable ' + fuellungTyp + Objekt.Daten.SchummelArray[fuellungTyp][werte][0] + 'Lable', '$("FuellungElement' + werte + '").select()', Objekt.Daten.SchummelArray[fuellungTyp][werte][1]);
+  			}
+  		}
+  		if(fuellungName == "Radial"||fuellungName == "Linear"){
+  			const colorstopContainer = 'FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigeColorstopContainer';
+  			createDivElement(fuellungenBearbeitenContainerId, colorstopContainer, 'FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigeColorstopContainer', "");
+  			for(let timestopNr in timestopArray){
+  				const colorstopElementContainer = 'TimestopElement'+timestopNr+'Container';
+  				createButtonElement(colorstopContainer, colorstopElementContainer, 'TimestopInputContainer', 'WaehleDiesenTimestopAus('+timestopNr+')', "");
+  				$('TimestopElement'+timestopNr+'Container').style.top = 1*1+timestopNr*8+"%";
+  				for(let werte in timestopArray[timestopNr]){
+  					const timestopTyp = "Timestop";
+  					createInputElement(colorstopElementContainer, 'TimestopElement' + timestopNr + werte, 'TimestopInput ' + timestopTyp + Objekt.Daten.SchummelArray[timestopTyp][werte][0], "text", timestopArray[timestopNr][werte], 'CB.GegnerSchablone.AenderDenWertFuellung(this.value,' + 2 + ',' + werte + ',"' + timestopNr + '")')
+  					createButtonElement(colorstopElementContainer, 'TimestopElement' + timestopNr + werte + 'Lable', 'TimestopInputLable ' + timestopTyp + Objekt.Daten.SchummelArray[timestopTyp][werte][0] + 'Lable', '$("TimestopElement' + timestopNr + werte + '").select()', Objekt.Daten.SchummelArray[timestopTyp][werte][1]);
+  				}
+  			}
+  		}
+  	}
+  	
+	WaehleDiesenTimestopAus = function(timestopNr){
+	    CB.WelcheTimestopIstGeradeAusgesuchtNummer = timestopNr;
+	    CB.WelcheTimestopIstGeradeAusgesuchtElement = $('TimestopElement'+timestopNr+'Container');
+	    for(let fuellungNr in CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2][CB.WelcheFuellungIstGeradeAusgesuchtNummer][2]){
+	        let welchesElement2 = 'TimestopElement' + fuellungNr + 'Container';
+	        $(welchesElement2).style.border = "0.2vh solid black";
+	    }
+	    CB.WelcheTimestopIstGeradeAusgesuchtElement.style.border = "0.2vh solid red";
+	    FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "block";
+	}
+
+	const FarbenAnzeigeContainerAnzeigen = function(){
+		const farbIndex = CB.WelcheFarbeIstGeradeAusgesuchtNummer;
+		const farbenArray = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs;
+	    FarbenAnzeigeContainer.innerHTML = "";
+	    let farbenId = "";
+	    if(farbIndex !== "leer"){
+	        farbenId = farbenArray[farbIndex][0];
+	    }
+	    farbenArray.sort();
+	    for(const farbenNr in farbenArray){
+	        if(farbenArray[farbenNr][0] === farbenId){
+	            CB.WelcheFarbeIstGeradeAusgesuchtNummer = farbenNr;
+	            CB.WelcheFarbeIstGeradeAusgesuchtElement = $("FarbenAnzeigeContainerFarbe" + farbenNr);
+	        }
+	    }
+	    for(const farbNr in farbenArray){
+	        const farbe = farbenArray[farbNr];
+	        const containerId = "FarbenAnzeigeContainer";
+	        const containerElementId = "FarbenAnzeigeContainerFarbe" + farbNr;
+	        const containerElement = createButtonElement(containerId, containerElementId, 'FarbenAnzeigeContainer', 'FarbenAnzeigeContainerAuswaehlen(this,' + farbNr + ')', "");
+	        const idElement = createDivElement(containerElementId, containerElementId + "id", 'FarbenAnzeigeContainerId', farbe[0]);
+	        const valueElement = createDivElement(containerElementId, containerElementId + "Value", 'FarbenAnzeigeContainerValue', farbe[1]);
+	        const canvasElement = createCanvasElement(containerElementId, containerElementId + "FarbAnzeige", 'FarbenAnzeigeContainerFarbAnzeige');
+	        ZeigDieFuellungen(farbe, farbNr);
+	    }
+	    if(farbIndex !== "leer"){
+	        $("FarbenContainer_FarbAnzeige").src = $('FarbenAnzeigeContainerFarbe' + farbIndex + 'FarbAnzeige').toDataURL();
+	    }
+	}
+
+	const ZeigDieFuellungen = function(farbArray, farbNr){
+	    const { Bild } = CB.GegnerSchablone[AktuelleCharakter];
+	    const { Width, Height } = Bild;
+	    const canvas = $('FarbenAnzeigeContainerFarbe' + farbNr + 'FarbAnzeige');
+	    canvas.width = Width;
+	    canvas.height = Height;
+	    const ctx = canvas.getContext('2d');
+	    ctx.fillStyle = farbArray[1];
+	    ctx.fillRect(0, 0, Width, Height);
+	    for(const fuellungen in farbArray[2]){
+	        ctx.beginPath();
+	        ctx.moveTo(0, 0);
+	        ctx.lineTo(0, Height);
+	        ctx.lineTo(Width, Height);
+	        ctx.lineTo(Width, 0);
+	        ctx.closePath();
+	        CB.GegnerSchablone.MachDieFuellungen(ctx, farbArray[0]);
+	    }
+	}
+
+	const StempelContainerAnzeigen = function(){
+		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+	    const stempelArray = aktuellerCharakter.Stempel.WelcheGibtEs;
+	    StempelContainerAnzeige.innerHTML = "";
+	    let nameVary = "";
+	    if(CB.WelcheStempelIstGeradeAusgesuchtNummer !== "leer"){
+	        nameVary = stempelArray[CB.WelcheStempelIstGeradeAusgesuchtNummer][0];
+	    }
+	    stempelArray.sort();
+	    for(const stempelNr in stempelArray){
+	        const stempelElementArrayId = stempelArray[stempelNr][0];
+	        const containerElementId = "StempelContainerAnzeige";
+	        const stempelElementContainerId = 'StempelContainerAnzeigeStempel' + stempelNr;
+	        const stempelElementContainer = createButtonElement(containerElementId, stempelElementContainerId, 'StempelContainerAnzeigeStempelContainer', 'StempelContainerAnzeigeStempelContainerAuswaehlen(this,'+stempelNr+')', "");
+	        const stempelElementIdAnzeige = createDivElement(stempelElementContainerId, stempelElementContainerId + 'id', 'StempelContainerAnzeigeStempelContainerId', stempelElementArrayId);
+	        const stempelElementThumpnail = createCanvasElement(stempelElementContainerId, stempelElementContainerId + 'Canvas', 'StempelContainerAnzeigeStempelContainerCanvas', 400, 400);
+	        const width = aktuellerCharakter.Bild.Width;
+	        const height = aktuellerCharakter.Bild.Height;
+	        const canvas = stempelElementThumpnail;
+	        MachDasStempelThumpnail(canvas, width, height, stempelElementArrayId);
+	        if(stempelElementArrayId === nameVary){
+	            CB.WelcheStempelIstGeradeAusgesuchtNummer = stempelNr;
+	            CB.WelcheStempelIstGeradeAusgesuchtElement = $(stempelElementContainerId);
+	        }
+	    }
+	    /*	if(CB.WelcheStempelIstGeradeAusgesuchtNummer != "leer"){  StempelContainerAnzeigeStempelContainerAuswaehlen(CB.WelcheStempelIstGeradeAusgesuchtElement,CB.WelcheStempelIstGeradeAusgesuchtNummer);}*/
+	}
+	
+	const MachDasStempelThumpnail = function(canvas, width, height, stempelId){
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext('2d');
+		Objekt.CanvasElemente["Stempel"](ctx, stempelId, 0, 0, 1, 1, 0, 0, 0);
+	}
+	
+  	PatternContainerAnzeigen = function(){
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const patternArray = aktuellerCharakter.Pattern.WelcheGibtEs;
+  		PatternContainerAnzeige.innerHTML = "";
+  		let nameVary = "";
+  		if(CB.WelchePatternIstGeradeAusgesuchtNummer != "leer"){
+  			nameVary = patternArray[CB.WelchePatternIstGeradeAusgesuchtNummer][0];
+  		}
+  		patternArray.sort();
+  		for(patternNr in patternArray){
+  			const patternElementArrayId = patternArray[patternNr][0];
+  			const containerElement = "PatternContainerAnzeige";
+  			const patternElementContainerId = 'PatternContainerAnzeigePattern'+patternNr;
+  			const patternElementContainer = createButtonElement(containerElement, patternElementContainerId, 'PatternContainerAnzeigePatternContainer', 'PatternContainerAnzeigePatternContainerAuswaehlen(this,'+patternNr+')', "");
+  			const patternElementIdAnzeige = createDivElement(patternElementContainerId, patternElementContainerId + "id", 'PatternContainerAnzeigePatternContainerId', patternElementArrayId);
+  			const patternElementThumpnail = createCanvasElement(patternElementContainerId, patternElementContainerId + "Canvas", 'PatternContainerAnzeigePatternContainerCanvas', 400, 400);
+  			const width = aktuellerCharakter.Bild.Width;
+  			const height = aktuellerCharakter.Bild.Height;
+  			const canvas = patternElementThumpnail;
+  			MachDasPatternThumpnail(canvas, width, height, patternElementArrayId);
+  			if(patternArray[patternNr][0] == nameVary){
+  				CB.WelchePatternIstGeradeAusgesuchtNummer = patternNr;
+  				CB.WelchePatternIstGeradeAusgesuchtElement = $(patternElementContainerId);
+  			}
+  		}
+  		/*	if(CB.WelchePatternIstGeradeAusgesuchtNummer != "leer"){	PatternContainerAnzeigePatternContainerAuswaehlen(CB.WelchePatternIstGeradeAusgesuchtElement,CB.WelchePatternIstGeradeAusgesuchtNummer);}*/
+  	}
+
+	const MachDasPatternThumpnail = function(canvas, width, height, pattern){
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext('2d');
+		ctx.fillStyle = "rgba(255,255,255,1)"
+		ctx.fillRect(0,0,width,height);
+		ctx.beginPath();
+		ctx.moveTo(0,0);
+		ctx.lineTo(0,height);
+		ctx.lineTo(width,height);
+		ctx.lineTo(width,0);
+		ctx.closePath();
+		const gradient = ctx.createPattern($(pattern),"repeat");
+		gradientVary = gradient;
+		ctx.fillStyle = gradientVary;
+		ctx.fill();
+	}
+
+	const OptionsContainer2DieseFarbeErstellen = function(){
+	    const nameVary = InputFarbenName.value;
+	    const valueVary = InputFarbenValue.value;
+	    let darfDerNameVerwendetWerden = true;
+	    CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs.forEach(farbArray => {
+	        if(nameVary === farbArray[0]){
+	            darfDerNameVerwendetWerden = false;
+	        }
+	    });
+	    if(darfDerNameVerwendetWerden){
+	        OptionsContainer2NeueFarbeContainerCheck();
+	        const arrayVary = [nameVary, valueVary, []];
+	        CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs.unshift(arrayVary);
+	        CB.GegnerSchablone.Farben.Erstellen(AktuelleCharakter);
+	        CB.WelcheFarbeIstGeradeAusgesuchtNummer = 0;
+	        CB.WelcheFarbeIstGeradeAusgesuchtElement = $("FarbenAnzeigeContainerFarbe" + CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+	        FarbenAnzeigeContainerAnzeigen();
+	        FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElement, CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+	    } else {
+	        SagDas(nameVary + " ist schon vergeben. Suche einen anderen Namen aus.");
+	    }
+	}
+
+	const OptionsContainer2DieseStempelErstellen = function(){
+	    const nameVary = InputStempelName.value;
+	    let darfDerNameVerwendetWerden = true;
+	    CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs.forEach(farbArray => {
+	        if(nameVary === farbArray[0]){
+	            darfDerNameVerwendetWerden = false;
+	        }
+	    });
+	    if(darfDerNameVerwendetWerden){
+	        OptionsContainer2NeueStempelContainerCheck();
+	        const arrayVary = [nameVary, []];
+	        CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs.unshift(arrayVary);
+	        CB.GegnerSchablone.Stempel.Erstellen(AktuelleCharakter);
+	        StempelContainerAnzeigen();
+	        TauschDenStempelAusSelectFeldOptionenErstellen();
+	    } else {
+	        SagDas(nameVary + " ist schon vergeben. Suche einen anderen Namen aus.");
+	    }
+	}
+	
+	const OptionsContainer2DiesePatternErstellen = function(){
+	    const nameVary = InputPatternName.value;
+	    let darfDerNameVerwendetWerden = true;
+	    CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs.forEach(farbArray => {
+	        if(nameVary === farbArray[0]){
+	            darfDerNameVerwendetWerden = false;
+	        }
+	    });
+	    if(darfDerNameVerwendetWerden){
+	        OptionsContainer2NeuePatternContainerCheck();
+	        const arrayVary = [nameVary, ["Zufall", "rgba(0,0,0,1)"]];
+	        CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs.unshift(arrayVary);
+	        CB.GegnerSchablone.Pattern.Erstellen(AktuelleCharakter);
+	        PatternContainerAnzeigen();
+	    } else {
+	        SagDas(nameVary + " ist schon vergeben. Suche einen anderen Namen aus.");
+	    }
+	}
+
+	FarbenAnzeigeContainerNameAendernInputAendern = function(){
+		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+		const stempelArray = aktuellerCharakter.Stempel.WelcheGibtEs;
+		const bestandteile = aktuellerCharakter.WelcheGibtEs;
+  		const nameVary = FarbenAnzeigeContainerNameAendernInput.value;
+  		const alterNameVary = aktuellerCharakter.Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][0];for (let farbNr in aktuellerCharakter.Farben.WelcheGibtEs) {
+  			let farbEintrag = aktuellerCharakter.Farben.WelcheGibtEs[farbNr];
+	  		if (nameVary === farbEintrag[0]) {
+		  		SagDas("Dieser Name ist bereits vergeben. Bitte wählen Sie einen anderen Namen.");
+		  		return;
+	  		}
+  		}
+		for (let teilNr in bestandteile) {
+		    var bestandteilId = bestandteile[teilNr][0];
+		    const alleElemente = aktuellerCharakter[bestandteilId].CanvasElemente.Alle;
+		    for (let elementeNr in alleElemente) {
+		        const einzelnesElement = alleElemente[elementeNr];
+		        for (let index in einzelnesElement) {
+		            const unterElement = einzelnesElement[index];
+		            if (unterElement == alterNameVary) {
+		                einzelnesElement[index] = nameVary;
+		            }
+		        }
+		    }
+		}
+		for (let stempelNr in stempelArray) {
+		    const stempelDetails = stempelArray[stempelNr][1];
+		    for (let eigenschaft in stempelDetails) {
+		        for (let index in stempelDetails[eigenschaft]) {
+		            const aktuelleFarbe = stempelDetails[eigenschaft][index];
+		            if (aktuelleFarbe == alterNameVary) {
+		                stempelDetails[eigenschaft][index] = nameVary;
+		            }
+		        }
+		    }
+		}
+  		aktuellerCharakter.Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][0] = nameVary;
+  		CB.GegnerSchablone.Farben.Erstellen(AktuelleCharakter);
+  		FarbenAnzeigeContainerAnzeigen();
+  		CB.WelcheFarbeIstGeradeAusgesuchtElement = $("FarbenAnzeigeContainerFarbe"+CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+  		FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElement,CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+  	}
+
+	StempelContainerAnzeigeStempelContainerNameAendernInputAendern = function() {
+		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+	    const zielArray = aktuellerCharakter.Stempel.WelcheGibtEs;
+	    const neuerName = StempelContainerAnzeigeStempelContainerNameAendernInput.value;
+	    const stempelIndex = CB.WelcheStempelIstGeradeAusgesuchtNummer;
+	    const alterNameVary = zielArray[stempelIndex][0];
+	    if (zielArray.some(stempel => stempel[0] === neuerName)) {
+	        SagDas("Dieser Name ist schon vergeben. Suche einen anderen Namen aus.");
+	        StempelContainerAnzeigeStempelContainerNameAendernInput.value = alterNameVary;
+	        return;
+	    }
+	    for (let [name, element] of Object.entries(aktuellerCharakter)) {
+	        if (element.CanvasElemente && element.CanvasElemente.Alle) {
+	            for (let unterElement of element.CanvasElemente.Alle) {
+	                for (let index in unterElement) {
+	                    if (unterElement[index] === alterNameVary) {
+	                        unterElement[index] = neuerName;
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    zielArray[stempelIndex][0] = neuerName;
+	    CB.GegnerSchablone.Stempel.Erstellen(AktuelleCharakter);
+	    StempelContainerAnzeigen();
+	    CB.WelcheStempelIstGeradeAusgesuchtElement = $("StempelContainerAnzeigeStempel" + stempelIndex);
+	    StempelContainerAnzeigeStempelContainerAuswaehlen(CB.WelcheStempelIstGeradeAusgesuchtElement, stempelIndex);
+	}
+
+	PatternContainerAnzeigePatternContainerNameAendernInputAendern = function() {
+	    var neuerName = PatternContainerAnzeigePatternContainerNameAendernInput.value;
+	    var alterName = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[CB.WelchePatternIstGeradeAusgesuchtNummer][0];
+	    for (let farbNr in CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs) {
+	        let farbEintrag = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[farbNr];
+	        if (neuerName === farbEintrag[0]) {
+	            SagDas("Dieser Name ist bereits vergeben. Bitte wählen Sie einen anderen Namen.");
+	            return;
+	        }
+	    }
+	    $(alterName).id = neuerName;
+	    for (let farbNr in CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs) {
+	        let farbEintrag = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[farbNr];
+	        for (let eintragNr in farbEintrag[2]) {
+	            let eintrag = farbEintrag[2][eintragNr];
+	            if (eintrag[0] === "Pattern" && eintrag[1][0] === alterName) {
+	                eintrag[1][0] = neuerName;
+	            }
+	        }
+	    }
+	    CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[CB.WelchePatternIstGeradeAusgesuchtNummer][0] = neuerName;
+	    CB.GegnerSchablone.Pattern.Erstellen(AktuelleCharakter);
+	    PatternContainerAnzeigen();
+	    PatternContainerAnzeigePatternContainerAuswaehlen($("PatternContainerAnzeigePattern" + CB.WelchePatternIstGeradeAusgesuchtNummer), CB.WelchePatternIstGeradeAusgesuchtNummer);
+	}
+
+  	FarbenAnzeigeContainerValueAendernInputAendern = function(){
+  		const farbIndex = CB.WelcheFarbeIstGeradeAusgesuchtNummer;
+  		const farbArray = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[farbIndex];
+  		const neuerValue = FarbenAnzeigeContainerValueAendernInput.value;
+ 	 	farbArray[1] = neuerValue;
+ 	 	CB.GegnerSchablone.Farben.Erstellen(AktuelleCharakter);
+ 	 	FarbenAnzeigeContainerAnzeigen();
+ 	 	CB.GegnerSchablone.MalDieBilder("Alle");
+ 	 	CB.WelcheFarbeIstGeradeAusgesuchtElement = $("FarbenAnzeigeContainerFarbe" + farbIndex);
+ 	 	FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElement, farbIndex);
+  	}
+  	
+	DieseFarbeLoeschen = function(){
+	    const nameVary = FarbenAnzeigeContainerNameAendernInput.value;
+	    const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+	    const farbenArray = aktuellerCharakter.Farben.WelcheGibtEs;
+	    const farbeIndex = CB.WelcheFarbeIstGeradeAusgesuchtNummer;
+	    const alterNameVary = farbenArray[farbeIndex][0];
+	    let darfGeloeschtWerden = true;
+	    let elementBeispielVary = "";
+	    let stempelHTMLVary = "";
+		for (let teilNr in aktuellerCharakter.WelcheGibtEs) {
+		    const elementArray = aktuellerCharakter.WelcheGibtEs[teilNr];
+		    const elementName = elementArray[0];
+		    for (let elementIndex in aktuellerCharakter[elementName].CanvasElemente.Alle) {
+		        const einzelnesElementArray = aktuellerCharakter[elementName].CanvasElemente.Alle[elementIndex];
+		        for (let unterElementIndex in einzelnesElementArray) {
+		            const unterElement = einzelnesElementArray[unterElementIndex];
+		            if (unterElement === alterNameVary) {
+		                darfGeloeschtWerden = false;
+		                elementBeispielVary += " " + elementArray[1] + ",";
+		            }
+		        }
+		    }
+		}
+	    elementBeispielVary += "...";
+		if(darfGeloeschtWerden == true){
+			if(alterNameVary == "Leer" || alterNameVary == "Weiss" || alterNameVary == "Schwarz"){
+				darfGeloeschtWerden = false;
+			}
+		}
+		for (let stempelNr in aktuellerCharakter.Stempel.WelcheGibtEs) {
+		    const stempelDetails = aktuellerCharakter.Stempel.WelcheGibtEs[stempelNr][1];
+		    for (let eigenschaft in stempelDetails) {
+		        for (let eigenschaftIndex in stempelDetails[eigenschaft]) {
+		            const aktuelleFarbe = stempelDetails[eigenschaft][eigenschaftIndex];
+		            if (aktuelleFarbe === nameVary) {
+		                darfGeloeschtWerden = false;
+		                stempelHTMLVary = aktuellerCharakter.Stempel.WelcheGibtEs[stempelNr][0];
+		            }
+		        }
+		    }
+		}
+	    if (darfGeloeschtWerden) {
+	        farbenArray.splice(farbeIndex, 1);
+	        CB.WelcheFarbeIstGeradeAusgesuchtNummer = "leer";
+	        CB.WelcheFarbeIstGeradeAusgesuchtElement = "leer";
+	        FarbenAnzeigeContainerNameAendernInput.value = "";
+	        FarbenContainerDieseFarbeLoeschenButton.style.display = "none";
+	        FarbenContainerDieseFarbeDuplizierenButton.style.display = "none";
+	        FarbenContainerFarbsucherButton.style.display = "none";
+	        FarbenAnzeigeContainerNameAendernInput.style.display = "none";
+	        FarbenContainer_FarbAnzeigeContainer.style.display = "none";
+	        FarbenContainer_FuellungAnzeigeContainer.style.display = "none";
+	        FarbenAnzeigeContainerFuellungenAnzeigeContainer.style.display = "none";
+	        FarbenAnzeigeContainerValueAendernInput.style.display = "none";
+	        FarbenContainerFuellungHinzufuegenButton.style.display = "none";
+	        FarbenContainerFuellungHinzufuegenTypInput.style.display = "none";
+	        FarbenContainerFuellungHinzufuegenEbeneInput.style.display = "none";
+	        FarbenAnzeigeContainerAnzeigen();
+	    } else {
+	        if (alterNameVary === "Leer" || alterNameVary === "Weiss" || alterNameVary === "Schwarz") {
+	            SagDas("Diese Farbe kann nicht gelöscht werden, da sie für interne Prozesse verwendet wird.");
+	        } else if (stempelHTMLVary !== "") {
+	            SagDas("Diese Farbe kann nicht gelöscht werden, weil sie noch von mindestens einem Stempel verwendet wird. Zum Beispiel: " + stempelHTMLVary);
+	        } else {
+	            SagDas("Diese Farbe kann nicht gelöscht werden, weil sie noch von Elementen verwendet wird. Zum Beispiel: " + elementBeispielVary);
+	        }
+	    }
+	}
+	
+	const DieseStempelBearbeiten = function(stelle, plane, levelNr, wer) {
+	    if (typeof stelle === "number") {
+	        const canvasElemente = CB.GegnerSchablone[AktuelleCharakter][plane + levelNr].CanvasElemente.Alle;
+	        const stempelName = canvasElemente[stelle][1];
+	        const stempelArray = CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs;
+	        for (let index in stempelArray) {
+	            if (stempelArray[index][0] === stempelName) {
+	                CB.WelcheStempelIstGeradeAusgesuchtNummer = index;
+	                welcheStempelIstGeradeAusgesuchtElement = $("StempelContainerAnzeigeStempel" + index);
+	            }
+	        }
+	    } else {
+	        StempelContainerCheck();
+	    }
+	    CB.ZeigDasBild("Stempel" + CB.WelcheStempelIstGeradeAusgesuchtNummer, "Stempel0", CB.WelcheStempelIstGeradeAusgesuchtNummer, "Stempel");
+	    AktuelleBildAuswahl.style.border = "0.3vh solid red";
+	    const stempelLevel = typeof levelNr === "number" ? levelNr : 0;
+	    MachDieElemente("Stempel", "Stempel", stempelLevel, CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs[CB.WelcheStempelIstGeradeAusgesuchtNummer][1], "Stempel");
+	}
+
+	const DieseStempelLoeschen = function() {
+	    const nameZuLoeschen = StempelContainerAnzeigeStempelContainerNameAendernInput.value;
+	    let elementBeispiel = "";
+	    let darfGeloeschtWerden = true;
+	    Object.values(CB.GegnerSchablone[AktuelleCharakter].WelcheGibtEs).some(function(array) {
+	        const name = array[0];
+	        return Object.values(CB.GegnerSchablone[AktuelleCharakter][name].CanvasElemente.Alle).some(function(elementArray) {
+	            return elementArray.some(function(element) {
+	                if (element === nameZuLoeschen) {
+	                    darfGeloeschtWerden = false;
+	                    elementBeispiel += " " + array[1] + ",";
+	                    return true;
+	                }
+	                return false;
+	            });
+	        });
+	    });
+	    elementBeispiel += "...";
+	    if (!darfGeloeschtWerden) {
+	        SagDas("Dieser Stempel kann nicht gelöscht werden, da er noch von Elementen verwendet wird. Zum Beispiel:" + elementBeispiel);
+	        return;
+	    }
+	    CB.GegnerSchablone[AktuelleCharakter].Stempel.WelcheGibtEs.splice(CB.WelcheStempelIstGeradeAusgesuchtNummer, 1);
+	    CB.WelcheStempelIstGeradeAusgesuchtNummer = "leer";
+	    CB.WelcheStempelIstGeradeAusgesuchtElement = "leer";
+	    StempelContainerAnzeigeStempelContainerNameAendernInput.value = "";
+	    StempelContainerDieseStempelLoeschenButton.style.display = "none";
+	    StempelContainerDieseStempelBearbeitenButton.style.display = "none";
+	    StempelContainerDieseStempelDuplizierenButton.style.display = "none";
+	    StempelContainerCanvasAnzeigeGross.style.display = "none";
+	    StempelContainerAnzeigeStempelContainerNameAendernInput.style.display = "none";
+	    StempelContainerAnzeigen();
+	}
+  
+  	DiesePatternLoeschen=function(){
+  		const aktuellerCharakter = CB.GegnerSchablone[AktuelleCharakter];
+  		const farbenArray = aktuellerCharakter.Farben.WelcheGibtEs;
+  		const stempelArray = aktuellerCharakter.Stempel.WelcheGibtEs;
+  		const alterNameVary = aktuellerCharakter.Pattern.WelcheGibtEs[CB.WelchePatternIstGeradeAusgesuchtNummer][0];
+  		let darfGeloeschtWerden = true;
+  		const alleFarbenMitDiesemPattern = [];
+  		const welcheStempelWerdenVerwendet = [];
+  		const welcheFarbenWerdenVerwendet = [];
+		Object.values(CB.GegnerSchablone[AktuelleCharakter].WelcheGibtEs).forEach(function(array) {
+	        const name = array[0];
+	        Object.values(CB.GegnerSchablone[AktuelleCharakter][name].CanvasElemente.Alle).forEach(function(elementArray) {
+	            elementArray.forEach(function(element) {
+	                if (element[0] === "Stempel" && !welcheStempelWerdenVerwendet.includes(element[1])) {
+	                    welcheStempelWerdenVerwendet.push(element[1]);
+	                } else if (!welcheFarbenWerdenVerwendet.includes(element[1])) {
+	                    welcheFarbenWerdenVerwendet.push(element[1]);
+	                }
+	            });
+	        });
+	    });
+		for (const stempel of stempelArray) {
+			if(welcheStempelWerdenVerwendet.includes(stempel[0])){
+		        for (const stempelDetail of stempel[1]) {
+		        	if (!welcheFarbenWerdenVerwendet.includes(stempelDetail[1])) {
+		      			welcheFarbenWerdenVerwendet.push(stempelDetail[1]);
+		 		    }		        
+		        }
+			}
+		}
+  		for(let farbNr in farbenArray){
+  			const farbId  =  farbenArray[farbNr][0];
+  			const fuellungenArray  =  farbenArray[farbNr][2];
+  			for(let fuellungNr in fuellungenArray){
+  				const fuellundId = fuellungenArray[fuellungNr][0];
+  				const fuellungFarbeId = fuellungenArray[fuellungNr][1][0];
+  				if(fuellundId == "Pattern"){
+  					if(alterNameVary == fuellungFarbeId){
+  						darfGeloeschtWerden = false;
+  						if (!alleFarbenMitDiesemPattern.includes(farbId)) {
+  							alleFarbenMitDiesemPattern.push(farbId);
+  						}
+  						
+  					}
+  				}
+  			}
+  		}
+  		if(darfGeloeschtWerden == false){
+  			SagDas("Dieses Pattern darf nicht geloescht werden, weil es noch in Farben verwendet wird. Z.B.: "+alleFarbenMitDiesemPattern);
+  			return;
+  		}
+		let elementBeispielVary = "";
+		Object.entries(CB.GegnerSchablone[AktuelleCharakter].WelcheGibtEs).forEach(([key, value]) => {
+		    const name = value[0];
+		    Object.values(CB.GegnerSchablone[AktuelleCharakter][name].CanvasElemente.Alle).forEach((array2) => {
+		        array2.forEach((array3) => {
+		            if (array3 === alterNameVary) {
+		            alert("zuzu")
+		                darfGeloeschtWerden = false;
+		                elementBeispielVary += ` ${value[1]},`;
+		            }
+		        });
+		    });
+		});
+		elementBeispielVary += "...";
+  		if(darfGeloeschtWerden == true){
+  			CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs.splice(CB.WelchePatternIstGeradeAusgesuchtNummer,1);
+  			CB.WelchePatternIstGeradeAusgesuchtNummer = "leer";
+  			CB.WelchePatternIstGeradeAusgesuchtElement = "leer";
+  			PatternContainerDiesePatternLoeschenButton.style.display = "none";
+  			PatternContainerAnzeigePatternContainerNameAendernInput.value = "";
+  			PatternContainerAnzeigePatternContainerNameAendernInput.style.display = "none";
+  			PatternContainerAnzeigePatternContainerAnzeigeCanvas.style.display = "none";
+  			PatternContainerAnzeigePatternContainerTexturAendernInput.value = "";
+  			PatternContainerAnzeigePatternContainerTexturAendernInput.style.display = "none";
+  			PatternContainerAnzeigePatternContainerFarbeAendernInput.value = "";
+  			PatternContainerAnzeigePatternContainerFarbeAendernInput.style.display = "none";
+  			PatternContainerFarbsucherButton.style.display = "none";
+  			PatternContainerAnzeigen();
+  		}else
+  		if(darfGeloeschtWerden == false){
+  			SagDas("Diese Pattern kann nicht geloescht werden, weil sie noch von Elementen verwendet wird. Zum Beispiel:"+elementBeispielVary);
+  		}
+  	}
+  	
+  	PatternContainerAnzeigePatternContainerValueAendernInputAendern = function(element, Nr){
+  		const patternIndex = CB.WelchePatternIstGeradeAusgesuchtNummer;
+  		const patternArray = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[patternIndex];
+  		const nameVary = $(element).value;
+  		const alterValueVary = patternArray[1][Nr];
+  		patternArray[1][Nr] = nameVary;
+  		CB.GegnerSchablone.Pattern.Erstellen(AktuelleCharakter);
+  		PatternContainerAnzeigen();
+  		CB.GegnerSchablone.MalDieBilder("Alle");
+  		MachDiePatternContainerAnzeigePatternContainerAnzeigeCanvas();
+  		$(element).value = nameVary;
+  		PatternContainerAnzeigePatternContainerAuswaehlen($("PatternContainerAnzeigePattern" + patternIndex), patternIndex);
+  	}
+  	
+  	DiesenTimestopLoeschen = function(){
+  		CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2][CB.WelcheFuellungIstGeradeAusgesuchtNummer][2].splice(CB.WelcheTimestopIstGeradeAusgesuchtNummer, 1);
+  		CB.WelcheTimestopIstGeradeAusgesuchtNummer = "leer";
+  		CB.WelcheTimestopIstGeradeAusgesuchtElement = "leer";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "none";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen();
+  	}
+  	
+  	DiesenTimestopHinzufuegen = function(){
+  		CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2][CB.WelcheFuellungIstGeradeAusgesuchtNummer][2][CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2][CB.WelcheFuellungIstGeradeAusgesuchtNummer][2].length] = [0, "rgba(0,0,0,1)"];
+  		CB.WelcheTimestopIstGeradeAusgesuchtNummer = "leer";
+  		CB.WelcheTimestopIstGeradeAusgesuchtElement = "leer";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "none";
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen();
+  	}
+  	
+  	DieseFuellungLoeschen = function(){
+  		CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2].splice(CB.WelcheFuellungIstGeradeAusgesuchtNummer, 1);
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerCheck();
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton.style.display = "none";
+  		CB.GegnerSchablone.MalDieBilder("Alle");
+  		FarbenAnzeigeContainerAnzeigen();
+  		FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElement, CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+  		CB.WelcheFuellungIstGeradeAusgesuchtNummer = "leer";
+  		CB.WelcheFuellungIstGeradeAusgesuchtElement = "leer";
+  	}
+  	
+  	FarbenContainerFuellungHinzufuegen = function() {
+	  	if (typeof CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2] !== "object") {
+		  	SagDas("nie");
+		  	CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2] = [];
+	  	}
+	  	let valueVary;
+	  	if (FarbenContainerFuellungHinzufuegenTypInput.value === "Radial") {
+		  	valueVary = ["Radial", ["200", "200", "1", "200", "200", "300"], [["0", "rgba(170,120,0,0.7)"], ["1", "rgba(0,0,0,0)"]]];
+		} else if (FarbenContainerFuellungHinzufuegenTypInput.value === "Linear") {
+		  	valueVary = ["Linear", ["0", "200", "400", "200"], [["0", "rgba(170,120,0,0.7)"], ["1", "rgba(0,0,0,0)"]]];
+	 	} else if (FarbenContainerFuellungHinzufuegenTypInput.value === "Pattern") {
+		  	const testPattern = CB.GegnerSchablone[AktuelleCharakter].Pattern.WelcheGibtEs[0][0];
+		  	valueVary = ["Pattern", [testPattern, "repeat", "1", "1", "0", "0", "1", "0"]];
+	  	}
+	  	CB.WelcheFuellungIstGeradeAusgesuchtNummer = FarbenContainerFuellungHinzufuegenEbeneInput.value;
+	  	CB.WelcheFuellungIstGeradeAusgesuchtElement = $("Fuellung" + CB.WelcheFuellungIstGeradeAusgesuchtNummer);
+	  	CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer][2].splice(FarbenContainerFuellungHinzufuegenEbeneInput.value, 0, valueVary);
+	  	CB.GegnerSchablone.MalDieBilder("Alle");
+	  	FarbenAnzeigeContainerAnzeigen();
+	  	FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElemen, CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+	  	FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen();
+	  	if (FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display !== "block") {
+		  	FarbenAnzeigeContainerFuellungenBearbeitenContainer.style.display = "block";
+	  	}
+  	}
+  	
+  	DieseFuellungVerschieben = function(richtung){
+  		const aktuelleFarbe = CB.GegnerSchablone[AktuelleCharakter].Farben.WelcheGibtEs[CB.WelcheFarbeIstGeradeAusgesuchtNummer];
+  		const fuellungen = aktuelleFarbe[2];
+  		const aktuelleFuellung=fuellungen[CB.WelcheFuellungIstGeradeAusgesuchtNummer];
+  		const index = CB.WelcheFuellungIstGeradeAusgesuchtNummer;
+  		let newIndex;
+  		if (richtung === "hoch") {
+  			newIndex = index - 1;
+  		} else if (richtung === "runter") {
+  			newIndex = parseInt(index) + 1;
+  		}
+  		fuellungen.splice(index, 1);
+		fuellungen.splice(newIndex, 0, aktuelleFuellung);
+		CB.WelcheFuellungIstGeradeAusgesuchtNummer = newIndex;
+		CB.WelcheFuellungIstGeradeAusgesuchtElement=$('Fuellung'+index);
+  		MachDieFarbenContainer_FuellungAnzeige();
+  		CB.GegnerSchablone.MalDieBilder("Alle");
+  		FarbenAnzeigeContainerAnzeigen();
+  		FarbenAnzeigeContainerAuswaehlen(CB.WelcheFarbeIstGeradeAusgesuchtElement, CB.WelcheFarbeIstGeradeAusgesuchtNummer);
+  		FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeigen();
+  	}
+
+  </script>
+  </head>
+  <body onload="CB.Init()">
+  <div id="CanvasJetztContainer"></div>
+  	<div id="PatternCanvasContainer"></div>
+  	<div id="BilderDownloadContainer" style="display:none;">
+  		<a href="Kugel.png" download >
+  		<div id="TestDiv"></div>
+  		</a>
+  	</div>
+  	<div id="Welt">
+
+		<div id ="DM_MainContainer">
+			<div id="DM_MainButtonBox">
+				<div id="DM_GibDenCodeRausButton" class="nonSelect" onclick="DM.GibDenCodeRaus(AktuelleCharakter)">Save</div>
+				<div id="DM_GibDenCodeReinContainerButton" class="nonSelect" onclick="DM.GibDenCodeReinContainerCheck()">Load</div>
+			</div>
+			<div id="DM_Code"></div>
+			<div id="DM_CodeWiederAusmachenButton" class="nonSelect" onclick="DM.CodeWiederAusmachen()">X</div>
+			<div id="DM_GibDenCodeReinContainer">
+				<div id="DM_GibDenCodeReinButton" onclick="DM.GibDenCodeRein()" class="nonSelect">Laden</div>
+				<input id="DM_GibDenCodeReinInput" value="" class="nonSelect"></input>
+				<div id="DM_GibDenCodeReinContainerSchliessenButton" onclick="DM.GibDenCodeReinContainerCheck()" class="nonSelect">X</div>
+			</div>
+		</div>
+		
+	  	<div id="BildContainer"></div>
+	  	<div id="BildContainerReal"></div>
+  			
+		<div id="AktuelleBildAuswahl" onclick="SagDas()" class="nonSelect">
+			<img id="AktuelleBildAuswahlBild" class="bild" src="">
+		</div>
+		<div id="BilderDownloadButton" onclick="BilderDownload()" class="nonSelect">Download</div>
+		<div id="DateienOeffnenButton" onclick="DateienContainerCheck()" class="nonSelect">Dateien</div>
+		<div id="AlleElementeLoeschenButton" onclick="ElementeLoeschenAbfrage()" class="nonSelect">Alle Elemente Loeschen</div>
+		<div id="FarbenContainerButton" onclick="FarbenContainerCheck()" class="nonSelect">Farben</div>
+		<div id="StempelContainerButton" onclick="StempelContainerCheck()" class="nonSelect">Stempel</div>
+		<div id="PatternContainerButton" onclick="PatternContainerCheck()" class="nonSelect">Pattern</div>
+		<div id="PolygoneContainerButton" onclick="PolygoneContainerCheck()" class="nonSelect">Polygone</div>
+  		<div id="DateienContainer">
+  			<div id="DateinContainerAnzeige"></div>
+  			<div id="DateinContainerSchliessenButton" onclick="DateienContainerCheck()">X</div>
+  		</div>
+  		<div id="FarbenContainer">
+  			<div id="FarbenAnzeigeContainer">X</div>
+  			<div id="FarbenContainerDieseFarbeLoeschenButton" onclick="DieseFarbeLoeschen()">Farbe Loeschen</div>
+  			<div id="FarbenContainerDieseFarbeDuplizierenButton" onclick="DieseFarbeDuplizieren()">Farbe Duplizieren</div>
+  			<input id="FarbenAnzeigeContainerNameAendernInput" value="juju" onchange="FarbenAnzeigeContainerNameAendernInputAendern()">
+  			<input id="FarbenAnzeigeContainerValueAendernInput" value="juju" onchange="FarbenAnzeigeContainerValueAendernInputAendern()">
+  			<div id="FarbenAnzeigeContainerFuellungenAnzeigeContainer"></div>
+  			<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainer">
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerAnzeige">X</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerSchliessenButton" onclick="FarbenAnzeigeContainerFuellungenBearbeitenContainerCheck()">X</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungLoeschenButton" onclick="DieseFuellungLoeschen()">Fuellung Loeschen</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenHochButton" onclick="DieseFuellungVerschieben('hoch')">↑</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerDieseFuellungVerschiebenRunterButton" onclick="DieseFuellungVerschieben('runter')">↓</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopLoeschenButton" onclick="DiesenTimestopLoeschen()">Timestop Loeschen</div>
+  				<div id="FarbenAnzeigeContainerFuellungenBearbeitenContainerDiesenTimestopHinzufuegenButton" onclick="DiesenTimestopHinzufuegen()">Timestop Hinzufuegen</div>
+  			</div>
+  			<div id="FarbenContainer_FarbAnzeigeContainer">
+  				<img id="FarbenContainer_FarbAnzeige" src="">
+  			</div>
+  			<div id="FarbenContainer_FuellungAnzeigeContainer">
+  				<canvas id="FarbenContainer_FuellungAnzeige" ></canvas>
+  			</div>
+  			<div id="FarbenContainerFarbsucherButton" onclick="FS.Check('FarbenAnzeigeContainerValueAendernInput')">Farbe Aussuchen</div>
+  			<div id="FarbenContainerFuellungHinzufuegenButton" onclick="FarbenContainerFuellungHinzufuegen()">Fuellung Hinzufuegen</div>
+  			<select name="FarbenContainerFuellungHinzufuegenTypInput" id="FarbenContainerFuellungHinzufuegenTypInput">
+  				<option value="Radial">Radial</option>
+  				<option value="Linear">Linear</option>
+  				<option value="Pattern">Pattern</option>
+  			</select>
+  			<select name="FarbenContainerFuellungHinzufuegenEbeneInput" id="FarbenContainerFuellungHinzufuegenEbeneInput"></select>
+  			<div id="FarbenContainerSchliessenButton" onclick="FarbenContainerCheck()">X</div>
+  			<div id="OptionsContainer2NeueFarbeContainer">
+  				<div id="InputFarbenNameContainer">
+  					<div id="InputFarbenNameLable" onclick="InputFarbenName.select()">Name:</div>
+  					<input id="InputFarbenName" value="Name">
+  				</div>
+  				<div id="InputFarbenValueContainer">
+  					<div id="InputFarbenValueLable" onclick="InputFarbenValue.select()">Value:</div>
+  					<input id="InputFarbenValue" value="rgba(0,0,0,1)">
+  				</div>
+  				<div id="OptionsContainerDieseFarbeErstellenButton" onclick="OptionsContainer2DieseFarbeErstellen()">Farbe Erstellen</div>
+  				<div id="OptionsContainer2NeueFarbeContainerSchliessenButton" onclick="OptionsContainer2NeueFarbeContainerCheck()">X</div>
+  			</div>
+  			<div id="OptionsContainer2NeueFarbeButton" onclick="OptionsContainer2NeueFarbeContainerCheck()">Neue Farbe</div>
+		</div>
+		<div id="StempelContainer">
+			<div id="StempelContainerAnzeige">X</div>
+			<input id="StempelContainerAnzeigeStempelContainerNameAendernInput" value="juju" onchange="StempelContainerAnzeigeStempelContainerNameAendernInputAendern()">
+			<div id="StempelContainerSchliessenButton" onclick="StempelContainerCheck()">X</div>
+			<div id="StempelContainerDieseStempelLoeschenButton" onclick="DieseStempelLoeschen()">Stempel Loeschen</div>
+			<div id="StempelContainerDieseStempelBearbeitenButton" onclick="DieseStempelBearbeiten()">Stempel Bearbeiten</div>
+			<div id="StempelContainerDieseStempelDuplizierenButton" onclick="CB.GegnerSchablone.DiesenStempelDuplizieren()">Stempel Duplizieren</div>
+			<canvas id="StempelContainerCanvasAnzeigeGross"></canvas>
+			<div id="OptionsContainer2NeueStempelContainer">
+				<div id="InputStempelNameContainer">
+					<div id="InputStempelNameLable" onclick="InputStempelName.select()">Name:</div>
+					<input id="InputStempelName" value="Name">
+				</div>
+				<div id="OptionsContainerDieseStempelErstellenButton" onclick="OptionsContainer2DieseStempelErstellen()">Stempel Erstellen</div>
+				<div id="OptionsContainer2NeueStempelContainerSchliessenButton" onclick="OptionsContainer2NeueStempelContainerCheck()">X</div>
+			</div>
+			<div id="OptionsContainer2NeueStempelButton" onclick="OptionsContainer2NeueStempelContainerCheck()">Neuer Stempel</div>
+		</div>
+		<dialog id="TauschDenStempelAus">
+			<div id="TauschDenStempelAusAlterName"></div>
+			<div id="TauschDenStempelAusButton" onclick="SagDas(123)">Stempel Austauschen</div>
+			<select id="TauschDenStempelAusSelectFeld"></select>
+			<div id="TauschDenStempelAusSchliessenButton" onclick="$('TauschDenStempelAus').close()">X</div>
+			<div id="TauschDenStempelAusFuerAlleCheckboxContainer">
+				<div id="TauschDenStempelAusFuerAlleCheckboxLable">Alle Stempel mit diesen Namen Aendern</div>
+				<input id="TauschDenStempelAusFuerAlleCheckbox" name="TauschDenStempelAusFuerAlleCheckbox" type="checkbox" />
+			</div>
+		</dialog>
+		<div id="PatternContainer">
+			<div id="PatternContainerAnzeige">X</div>
+			<canvas id="PatternContainerAnzeigePatternContainerAnzeigeCanvas"></canvas>
+	 		<input id="PatternContainerAnzeigePatternContainerNameAendernInput" value="juju" onchange="PatternContainerAnzeigePatternContainerNameAendernInputAendern()">
+	 		<select id="PatternContainerAnzeigePatternContainerTexturAendernInput" value="juju" onchange="PatternContainerAnzeigePatternContainerValueAendernInputAendern('PatternContainerAnzeigePatternContainerTexturAendernInput',0)"></select>
+	 		<input id="PatternContainerAnzeigePatternContainerFarbeAendernInput" value="juju" onchange="PatternContainerAnzeigePatternContainerValueAendernInputAendern('PatternContainerAnzeigePatternContainerFarbeAendernInput',1)">
+			<div id="PatternContainerFarbsucherButton" onclick="FS.Check('PatternContainerAnzeigePatternContainerFarbeAendernInput')">Farbe Aussuchen</div>
+			<div id="PatternContainerSchliessenButton" onclick="PatternContainerCheck()">X</div>
+			<div id="PatternContainerDiesePatternLoeschenButton" onclick="DiesePatternLoeschen()">Diesen Pattern Loeschen</div>
+			<div id="OptionsContainer2NeuePatternContainer">
+	  			<div id="InputPatternNameContainer">
+						<div id="InputPatternNameLable" onclick="InputPatternName.select()">Name:</div>
+						<input id="InputPatternName" value="Namek">
+				</div>
+				<div id="OptionsContainerDiesePatternErstellenButton" onclick="OptionsContainer2DiesePatternErstellen()">Pattern Erstellen</div>
+				<div id="OptionsContainer2NeuePatternContainerSchliessenButton" onclick="OptionsContainer2NeuePatternContainerCheck()">X</div>
+			</div>
+			<div id="OptionsContainer2NeuePatternButton" onclick="OptionsContainer2NeuePatternContainerCheck()">Neuer Pattern</div>
+		</div>
+  		<div id="CanvasElementContainer"></div>
+  		<div id="OptionsContainer">
+  			<div id="OptionsContainerId" class="nonSelect"></div>
+  			<div id="OptionsContainerAnzeige" class="nonSelect"></div>
+  		</div>
+  		<div id="ElementCreationContainer">
+  			<div id="ElementCreationContainerAnzeige" class="nonSelect"></div>
+  			<div id="ElementCreationContainerSchliessenButton" onclick="ElementCreationContainerCheck()">X</div>
+  		</div>
+  	</div>
+  	<div id="Bilder" style="display:none;"></div>
+  	<div id="AllerErstellungsCanvassesContainer" style="display:none;"></div>
+  	<div id="AllerErstellungsImagesContainer" style="display:none;"></div>
+  	<div id="StempelCanvasElementContainer" style="display:none;"></div>
+  	
+  	<div id="PM_MainContainer" style="display:none;">
+	  	<div id="PM_Buttons">
+		  	<button id="PM_NewCanvasButton" onclick="PM.NewPolygon()">Neues Bild</button>
+		  	<button id="PM_SaveButton" onclick="PM.SavePolygon()">Bild Speichern</button>
+		  	<button id="PM_DeleteCoordinateButton" onclick="PM.DeleteSelectedCoordinate()">Punkt löschen</button>
+		  	<button id="PM_UndoButton" onclick="PM.Undo()">Rückgängig machen</button>
+		  	<button id="PM_RestoreButton" onclick="PM.RestoreLastDeletedHistoryValue()">Wieder Herstellen</button>
+		  	<button id="PM_ToggleCirclesButton" onclick="PM.ToggleCircles()">Kreise ausblenden</button>
+		  	<button id="PM_ApplyInbetweenPointsToPolygonButton" onclick="PM.ApplyInbetweenPointsToPolygon(PM.Coordinates)">Zwischen Punkte</button>
+		  	<button id="PM_ApplyCurveSmoothingToPolygonButton" onclick="PM.ApplyCurveSmoothingToPolygon()">Kurven glätten</button>
+	  	</div>
+	  	<canvas id="PM_Canvas" width=400 height=400 class="PM_MainCanvasDisplay PM_ChessPattern "></canvas>
+	  	<div id="PM_IdChangeContainer">
+		  	<input id="PM_ImageIDInput" type="text" value="1" />
+		  	<button id="PM_ChangeImageIDButton" onclick="PM.ChangeImageID()">Ändern</button>
+	  	</div>
+	  	<div id="PM_SizeDisplay">
+		  	<label for="PM_CanvasWidthInput">Breite:</label>
+		  	<input type="number" id="PM_CanvasWidthInput" value="400" onchange="PM.UpdateCanvasSize()" />
+		  	<label for="PM_CanvasHeightInput">Höhe :</label>
+		  	<input type="number" id="PM_CanvasHeightInput" value="400" onchange="PM.UpdateCanvasSize()" />
+		  	<label for="PM_ScalePointsCheckbox">Skalieren:</label>
+		  	<input type="checkbox" id="PM_ScalePointsCheckbox" onchange="PM.ScalePointsOnChange()" />
+	  	</div>
+	  	<div id="PM_Controls">
+		  	<label for="PM_LineWidth">Linienbreite:</label>
+		  	<input type="range" id="PM_LineWidth" min="1" max="20" value="1" onchange="PM.UpdateConstructionValue('lineWidth', $('PM_LineWidth').value)" />
+		  	<label for="PM_LineColor">Linienfarbe:</label>
+		  	<input type="color" id="PM_LineColor" value="#000000" onchange="PM.UpdateConstructionValue('lineColor', $('PM_LineColor').value)" />
+		  	<label for="PM_LineAlpha">Linien-Alpha:</label>
+		  	<input type="range" id="PM_LineAlpha" min="0" max="1" step="0.1" value="1" onchange="PM.UpdateConstructionValue('lineAlpha', $('PM_LineAlpha').value)" />
+		  	<label for="PM_FillColor">Füllfarbe:</label>
+		  	<input type="color" id="PM_FillColor" value="#ffffff" onchange="PM.UpdateConstructionValue('fillColor', $('PM_FillColor').value)" />
+		  	<label for="PM_FillAlpha">Füll-Alpha:</label>
+		  	<input type="range" id="PM_FillAlpha" min="0" max="1" step="0.1" value="1" onchange="PM.UpdateConstructionValue('fillAlpha', $('PM_FillAlpha').value)" />
+	  	</div>
+	  	<div id="PM_MultiPointModeContainer">
+		  	<input type="checkbox" id="PM_MultiPointModeCheckbox" onchange="PM.ToggleMultiPointButtons()">
+		  	<label id="PM_MultiPointModeCheckboxLabel" for="PM_MultiPointModeCheckbox">SingePoint-Modus</label>
+		  	<button id="PM_DeselectAllCoordinatesButton" style="display:none;" onclick="PM.DeselectAllCoordinates()">Auswahl leeren</button>
+		  	<button id="PM_AddAllCoordinatesExceptSelectedButton" style="display:none;" onclick="PM.AddAllCoordinatesExceptSelected()">Alles Auswählen</button>
+	  	</div>
+	  	<button id="PM_CopyAndPastePolygonDataArrayIntoCacheButton" onclick="PM.CopyAndPastePolygonDataArrayIntoCache()">Array in den Arbeisspeicher</button>
+	  	<button id="PM_ClosePolygonMakerButton" onclick="PM.ClosePolygonMaker()">X</button>
+	  	<div id="PM_PolygonContainer"></div>
+  	</div>
+
+	<dialog id="FS_MainContainer">
+		<canvas id="FS_AnzeigeCanvas"></canvas>
+		<div id="FS_AuswaehlenButton" onclick="FS.DieseFarbeAuswaehlen()">Diese Farbe Waehlen</div>
+		<div id="FS_FavcolorContainer">
+			<div id="FS_FavcolorLable">Grundfarbe Waehlen:</div>
+			<input type="color" id="FS_Favcolor" name="FS_Favcolor" value="#ff0000" onchange="FS.Favcolor()">
+		</div>
+		<div id="FS_OpacityContainer">	
+			<input type="range" id="FS_OpacityRegler" min="0" max="1" step="0.001" value="1" onchange="FS.ZeigDenValue('Regler')">
+			<input id="FS_OpacityValue" value="1" onchange="FS.ZeigDenValue('Value')">
+		</div>
+		<div id="FS_SchliessenButton" onclick="$('FS_MainContainer').close()">X</div>
+	</dialog>
+	
+	<div id="AM_MainContainer">
+		<div id="AM_StartenButton" onclick="AM.Check()" class="nonSelect"></div>
+		<div id="AM_KleinerMachenButton" onclick="AM.Groessen.Aendern(-1)" class="nonSelect">-</div>
+		<div id="AM_GroesserMachenButton" onclick="AM.Groessen.Aendern(1)" class="nonSelect">+</div>
+		<select name="AM_BPSInput" id="AM_BPSInput" onchange="AM.BPS.Aendern()" class="nonSelect">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="4">4</option>
+			<option value="8">8</option>
+			<option value="12">12</option>
+			<option value="24">24</option>
+			<option value="60">60</option>
+		</select>
+		<div id="AM_BildContainer" onclick="AM.Check()" class="nonSelect">
+			<img id="AM_Bild" class="bild" src="">
+		</div>
+	</div>
+	<div id="ElementeMover_MainContainer">
+		<canvas id="ElementeMover_Canvas" width:100 height:100></canvas>
+		<div id="ElementeMover_SchliessenButton" onclick="ElementeMover.Check()">X</div>
+	</div>
+	
+	<script src="scripts/OperationSystem.0.0.1.js"></script>
+	<script src="scripts/AnimationMaker.0.0.1.js"></script>
+	<script src="scripts/BilderDownload.0.0.1.js"></script>
+  	<script src="scripts/Farbensucher.0.0.1.js"></script>
+  	<script src="scripts/CanvasElemente.js"></script>
+  	<script src="scripts/GegnerSchablonen.js"></script>
+  	<script src="scripts/Pattern.js"></script>
+  	<script src="scripts/CB.Daten.0.0.1.js"></script>
+  	<script src="scripts/DataMover.0.0.1.js"></script>
+  	<script src="scripts/polygonmaker.0.0.2.js"></script>
+  </body>
+  </html>

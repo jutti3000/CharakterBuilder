@@ -1,0 +1,299 @@
+#PM_MainContainer {
+	position: absolute;
+	left: 0%;
+	top: 0%;
+	width: 100%;
+	height: 100%;
+	background-color: #ff56ff;
+	z-index:1;
+}
+
+#PM_Canvas {
+	cursor: crosshair;
+}
+
+.PM_ChessPattern{
+	background-size: 10% 10%;
+	background-image: 
+	linear-gradient(45deg, #bbb 25%, transparent 25%, 
+	transparent 75%, #bbb 75%, #bbb),
+	linear-gradient(45deg, #bbb 25%, transparent 25%, 
+	transparent 75%, #bbb 75%, #bbb),
+	linear-gradient(45deg, #eee 25%, transparent 25%, 
+	transparent 75%, #eee 75%, #eee),
+	linear-gradient(45deg, #eee 25%, transparent 25%, 
+	transparent 75%, #eee 75%, #eee);
+	background-position: 0 0, 50% 50%, 50% 0, 0 50%;
+}
+	
+.PM_ChessPatternSmall{
+	background-size: 25% 25%;
+	background-image: 
+	linear-gradient(45deg, #bbb 25%, transparent 25%, 
+	transparent 75%, #bbb 75%, #bbb),
+	linear-gradient(45deg, #bbb 25%, transparent 25%, 
+	transparent 75%, #bbb 75%, #bbb),
+	linear-gradient(45deg, #eee 25%, transparent 25%, 
+	transparent 75%, #eee 75%, #eee),
+	linear-gradient(45deg, #eee 25%, transparent 25%, 
+	transparent 75%, #eee 75%, #eee);
+	background-position: 0 0, 50% 50%, 50% 0, 0 50%;
+}
+	
+#PM_PolygonContainer {
+	position: absolute;
+	left: 2%;
+	top: 60%;
+	width: 95%;
+	height: 38%;
+	border: 2px solid black;
+	background-color: #5656ff;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_ApplyCurveSmoothingToPolygonButton,
+#PM_ApplyInbetweenPointsToPolygonButton,
+#PM_ToggleCirclesButton,
+#PM_NewCanvasButton,
+#PM_SaveButton,
+#PM_UndoButton,
+#PM_RestoreButton,
+#PM_DeleteCoordinateButton {
+	font-size: 0.8vh;
+	box-shadow:2px 2px 2px rgba(0,0,0,0.5);
+	margin-top: 2%;
+	margin-left:0%;
+	width: 7%;
+	height: 10%;
+}
+
+#PM_IdChangeContainer {
+	position: absolute;
+	font-size: 1vh;
+	top: 6%;
+	right: 2vw;
+	width: 18%;
+	height: 7%;
+	background-color: lightblue;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_MultiPointModeCheckbox{
+	position: absolute;
+	left:70%;
+}
+
+#PM_ImageIDInput {
+	position: absolute;
+	top: 3%;
+	left: 3%;
+	width: 90%;
+	height: 44%;
+	font-size: 1vh;
+}
+
+#PM_ChangeImageIDButton {
+	position: absolute;
+	left: 30%;
+	top: 60%;
+	width: 40%;
+	height: 30%;
+}
+
+.PM_PolygonObjectsDisplay-thumbnail {
+	position:absolute;
+	display: inline-block;
+	left:1%;
+	top:3%;
+	height: 87%;
+	width: auto;
+	margin-right: 2vw;
+	border: 1px solid black;
+	background-color: white;
+}
+
+.PM_PolygonObjectsDisplay-container {
+	position:relative;
+	border: 2px solid black;
+	margin: 2px;
+	padding:20px;
+	background-color: #3232aa;
+}
+
+.PM_PolygonObjectsDisplay-container button {
+	position:absolute;
+	top:10%;
+	height:80%;
+}
+
+.PM_PolygonObjectsDisplay-infoButton{
+	left:39%;
+}
+
+.PM_PolygonObjectsDisplay-loadButton{
+	left:45%;
+}
+
+.PM_PolygonObjectsDisplay-deleteButton{
+	left:52.8%;
+}
+
+.PM_PolygonObjectsDisplay-updateButton{
+	left:62.5%;
+}
+
+.PM_PolygonObjectsDisplay-idDisplay{
+	position:absolute;
+	left:7%;
+	top:5%;
+	width:30%;
+	height:80%;
+	text-align:center;
+	font-size:1.4vh;
+	background-color:white;
+	border:2px solid black;
+}
+
+.PM_PolygonObjectsDisplay-container.selected {
+	border: 2px solid #444;
+	background-color: #6767aa;
+}
+
+.PM_MainCanvasDisplay {
+	position: absolute;
+	left: 2%;
+	top: 6%;
+	width: 76%;
+	height: 52%;
+	border:2px solid black;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_SizeDisplay {
+	position: absolute;
+	top: 14%;
+	right: 2vw;
+	width: 18%;
+	height: 7%;
+	background-color: lightblue;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_SizeDisplay input {
+	margin-left: 5%;
+	margin-top:2%;
+	width: 30%;
+	text-align: center;
+}
+
+#PM_SizeDisplay label {
+	margin-left:15%;
+	margin-top:2%;
+}
+
+#PM_Controls {
+	position: absolute;
+	top: 22%;
+	right: 2%;
+	width: 18%;
+	height: 18%;
+	background-color: lightblue;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_Controls input {
+	margin-left: 5%;
+	margin-top:3%;
+	width: 90%;
+	text-align: center;
+}
+
+#PM_Controls label {
+	margin-left:27%;
+	margin-top:10%;
+}
+
+#PM_MultiPointModeContainer{
+	position: absolute;
+	top: 41%;
+	right: 2vw;
+	width: 18%;
+	height: 3%;
+	background-color: lightblue;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_MultiPointModeContainer button{
+	position: relative;
+	width:80%;
+	margin-left:10%;
+	margin-top:5%;
+}
+
+#PM_MultiPointModeContainer input{
+	position: relative;
+	margin-left:10%;
+	margin-top:2%;
+}
+
+#PM_MultiPointModeCheckboxLabel{
+	position: absolute;
+	font-size:1vh;
+	left:4%;
+	top:5px;
+}
+
+#PM_CopyAndPastePolygonDataArrayIntoCacheButton{
+	position: absolute;
+	top: 53%;
+	right: 2%;
+	width: 18%;
+	height: 5%;
+	background-color: lightblue;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
+
+#PM_MainContainer button{
+/*	background-color: #a4d1e8;*/
+	border-radius:10%;
+}
+
+#PM_MainContainer button:active {
+	background-color: #74a1b8;
+	box-shadow: 0 5px #666;
+	transform: translateY(2px);
+}
+
+.PM_ToolButton {
+	font-size:0.8vh;
+	background-color: #2323ff; /* Ändern Sie die Hintergrundfarbe des aktiven Buttons nach Ihren Wünschen */
+	color: white; /* Ändern Sie die Textfarbe des aktiven Buttons nach Ihren Wünschen */
+}
+
+.PM_ToolButton.active {
+	background-color: lightblue; /* Ändern Sie die Hintergrundfarbe des aktiven Buttons nach Ihren Wünschen */
+	color: white; /* Ändern Sie die Textfarbe des aktiven Buttons nach Ihren Wünschen */
+}
+
+#PM_ClosePolygonMakerButton{
+	position: absolute;
+	top: 0.8%;
+	right: 0.5%;
+	width: 4.5%;
+	height: 3%;
+	background-color: red;
+	border: 2px solid black;
+	font-size: 1vh;
+	box-shadow:10px 10px 10px rgba(0,0,0,0.5);
+}
